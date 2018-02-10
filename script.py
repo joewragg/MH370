@@ -1,11 +1,12 @@
 import numpy as np
+import math
 import time
+import pandas as pd
 from datetime import datetime, timedelta
 from scipy.spatial import distance
 
-#Initialisation
+#Initial variables
 dateSat = []
-date = []
 x = []
 y = []
 z = []
@@ -14,31 +15,24 @@ vy = []
 vz = []
 lat = []
 lon = []
-dates = []
-datesSat = []
-#not sure if length of data obtained from csv is correct +-1
- 
+
 #Constants
 posGES = np.array((-2368.8, 4881.1, -3342.0))
 posAES = np.array((-1293.0, 6238.3, -303.5))
 
 #begin
-#Grab ImarSat Data
-data = np.genfromtxt(fname='inmarsat.csv', delimiter=',', dtype=str, skip_header=1)
+#Grab InmarSat Data
+data = pd.read_csv("inmarsat.csv", usecols=[0,25,27])
+data['Date'] = pd.to_datetime(data.Date, format='%d/%m/%Y %H:%M:%S.%f')
 
-#Convert Imarsate dates into array in datetime format
-#example date: 7/03/2014 16:00:13.406
-for i in range(len(data)):
-	date.append(datetime.strptime(data[i][0], "%d/%m/%Y %H:%M:%S.%f")) 
-
+#Grab report data
 Report = open("Report", "r")
 lines = Report.readlines()
-print("First two lines: \n")
 
 #Grab report data
 for i, line in enumerate(lines):
-	if i <=1:
-		print(line, "\n\n")
+	#if i <=1:
+	#	print(line, "\n\n")
 	if "Nov" in line:
 		print(line)
 		lines.pop(i) 
@@ -49,31 +43,40 @@ for i, line in enumerate(lines):
 		x.append(line.split()[4])
 		y.append(line.split()[5])
 		z.append(line.split()[6])
-		vx.append(line.split()[7])
-		vy.append(line.split()[8])
-		vz.append(line.split()[9])
-		lat.append(line.split()[10])
-		lon.append(line.split()[11])
+		#vx.append(line.split()[7])
+		#vy.append(line.split()[8])
+		#vz.append(line.split()[9])
+		#lat.append(line.split()[10])
+		#lon.append(line.split()[11])
+dataSat = []
+xd = []
+yd = []
+zd = []
+data = data[pd.notnull(data['BTO'])]
+data = data.reset_index(drop=True)
+for i in range(len(data)):
+	print(data['Date'][i])
+	#if data['Date'][i]==datetime(2014,3,7,16,41,52,907000):break#stop at 4:30 for speed
+	if data['Date'][i]==datetime(2014,3,7,16,6,34,906000):break#stop at 4:06 for speed
+	for j in range(len(dateSat)):
+		if abs(dateSat[j]-data['Date'][i])<=timedelta(0,0,0,50):
+			dataSat.append(dateSat[j])
+			xd.append(x[j])
+			yd.append(y[j])
+			zd.append(z[j])
+			break
+data["DateSat"] = pd.Series(dataSat)
+data["x"] = pd.Series(xd)
+data["y"] = pd.Series(yd)
+data["z"] = pd.Series(zd)
+data = data[['Date', 'DateSat', 'x', 'y', 'z', 'BTO', 'BFO']]#rearrange columns
+print('\n\n First Five Rows of data:')
+print(data.head(5))
 
-#Put xyz into pos numpy array
-posSat = np.column_stack((np.asarray(x, dtype=float),np.asarray(y, dtype=float),np.asarray(z, dtype=float)))
-velSat = np.column_stack((np.asarray(vx, dtype=float),np.asarray(vy, dtype=float),np.asarray(vz, dtype=float)))
-
-#Calculate eucluedian distances
-#distSatGES = np.linalg.norm(posSat-posGES, axis=1)
-#distSatAES = np.linalg.norm(posSat-posAES, axis=1)
-
-print(data[1][25])
-
-for i in range(len(date)):
-	if date[i]==datetime(2014,3,7,16,41,52,907000):
-		break
-	if data[i][25]!='':
-		for j in range(len(dateSat)):
-			if (((dateSat[j]-date[i])<=timedelta(0,0,0,100)) and (dateSat[j]>date[i])) or (((dateSat[j]-date[i])>=timedelta(0,0,0,100)) and (dateSat[j]<date[i])):
-				print(date[i])
-				dates.append(date[i])		
-				datesSat.append(dateSat[j])
-for i in range(len(dates)):
-	print(dates[i], datesSat[i])
-#Still rounding up
+#BTO
+posSat = np.linalg.norm(data.as_matrix(['x', 'y', 'z']))
+posSat = posSat.astype(float)
+distSatGES = np.linalg.norm(posSat-posGES, axis=1) 
+distSatAES = np.linalg.norm(posSat-posAES, axis=1) 
+print(distSatGES)
+print(distSatAES)
