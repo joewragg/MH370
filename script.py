@@ -95,19 +95,19 @@ def inputR(inputText, wantedTextList):
 		if string in wantedTextList:inp = True
 	return string 
 
-def getDistStationary(posSat):
+def getDist(posSat):
 	posSat = posSat[~np.isnan(posSat).any(axis=1)]#Take NaNs out of data
 	distSatGES = np.linalg.norm(posSat-posGES, axis = 1)
 	distSatAES = np.linalg.norm(posSat-posAES, axis = 1)
 	return distSatGES, distSatAES
 
 def getBias(posSat):
-	distSatGES, distSatAES = getDistStationary(posSat)
+	distSatGES, distSatAES = getDist(posSat)
 	for i in range(len(data)):
 		if data['ChType'][i]=="R-Channel RX":
-			biasR = (2*(distSatAES+distSatGES))/c + (data['BTO'][i]*1e-6)
+			biasR = (data['BTO'][i]*1e-6) - 2*(distSatAES+distSatGES)/c 
 		if data['ChType'][i]=="T-Channel RX":
-			biasT = (2*(distSatAES+distSatGES))/c + (data['BTO'][i]*1e-6)
+			biasT = (data['BTO'][i]*1e-6) - 2*(distSatAES+distSatGES)/c  #old = (2*(distSatAES+distSatGES))/c + (data['BTO'][i]*1e-6)
 	biasR = np.mean(biasR)
 	biasT = np.mean(biasT)
 	bias = []
@@ -118,7 +118,7 @@ def getBias(posSat):
 	return bias
 
 def getDistSatPlane(posSat):
-	distSatGES, distSatAES = getDistStationary(posSat)
+	distSatGES, distSatAES = getDist(posSat)
 	distSatPlane = (0.5*c*((data["BTO"].values*1e-6)-data["bias"].values)) - distSatGES 
 	return distSatPlane
 
