@@ -50,12 +50,14 @@ def getData(Time = 3):
 			#vx.append(line.split()[7])
 			#vy.append(line.split()[8])
 			#vz.append(line.split()[9])
-			#lat.append(line.split()[10])
-			#lon.append(line.split()[11])
+			lat.append(line.split()[10])
+			lon.append(line.split()[11])
 	dataSat = []
 	xd = []
 	yd = []
 	zd = []
+	lond = []
+	latd = []
 	data = data[pd.notnull(data['BTO'])]
 	data = data.reset_index(drop=True)
 	data = data[pd.notnull(data['BTO'])]
@@ -74,13 +76,17 @@ def getData(Time = 3):
 				xd.append(x[j])
 				yd.append(y[j])
 				zd.append(z[j])
+				latd.append(lat[j])
+				lond.append(lon[j])
 				del dateSat[:j] 
 				break
 	data["DateSat"] = pd.Series(dataSat)
 	data["x"] = pd.Series(xd)
 	data["y"] = pd.Series(yd)
 	data["z"] = pd.Series(zd)
-	data = data[['Date', 'DateSat', 'x', 'y', 'z', 'ChType', 'BFO', 'BTO']]#rearrange columns
+	data["Lat"] = pd.Series(latd)
+	data["Lon"] = pd.Series(lond)
+	data = data[['Date', 'DateSat', 'x', 'y', 'z', 'Lat', 'Lon', 'ChType', 'BFO', 'BTO']]#rearrange columns
 	data.x = data.x.astype(float)
 	data.y = data.y.astype(float)
 	data.z = data.z.astype(float)
@@ -134,3 +140,18 @@ if inString =="no":
 	data = pd.read_csv("data")
 data["dist"] = getDistSatPlane(data.as_matrix(['x','y','z']))
 print(data)
+data.to_csv("FinalData.csv")
+f = open('flight.kml', 'w')
+#Writing the kml file.
+f.write("<?xml version='1.0' encoding='UTF-8'?>\n")
+f.write("<kml xmlns='http://earth.google.com/kml/2.2'>\n")
+f.write("<Document>\n")
+f.write("<Placemark>\n")
+f.write("   <name>Sat</name>\n")
+f.write("   <Point>")
+f.write("     <coordinates>"+ str(np.mean(data["Lon"].values))+","+ str(np.mean(data["Lat"].values))+",35786</coordinates>")#Change Altitude
+f.write("   </Point>")
+f.write("</Placemark>\n")
+f.write("</Document>")
+f.write("</kml>\n")
+f.close()
