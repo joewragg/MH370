@@ -1,4 +1,6 @@
 import numpy as np
+import simplekml
+from polycircles import polycircles as pc
 import math
 import time
 import pandas as pd
@@ -23,16 +25,15 @@ def getData(Time = 3):
 	dateSat = []
 	x = []
 	y = []
+	alt = []
 		#begin
 	#Grab InmarSat Data
 	data = pd.read_csv("inmarsat.csv", usecols=[0,8,25,27])
 	data.rename(columns={'Time':'Date', 'Frequency Offset (Hz)': 'BFO', 'Burst Timing Offset (microseconds)': 'BTO', 'Channel Type': 'ChType'}, inplace=True)
 	data['Date'] = pd.to_datetime(data['Date'], format='%d/%m/%Y %H:%M:%S.%f')
-
 	#Grab report data
-	Report = open("Report", "r")
+	Report = open("Report.txt", "r")
 	lines = Report.readlines()
-
 	#Grab report data
 	for i, line in enumerate(lines):
 		#if i <=1:
@@ -52,24 +53,20 @@ def getData(Time = 3):
 			#vz.append(line.split()[9])
 			lat.append(line.split()[10])
 			lon.append(line.split()[11])
+			alt.append(line.split()[12])
 	dataSat = []
 	xd = []
 	yd = []
 	zd = []
 	lond = []
 	latd = []
+	altd = []
 	data = data[pd.notnull(data['BTO'])]
 	data = data.reset_index(drop=True)
 	data = data[pd.notnull(data['BTO'])]
 	data = data.reset_index(drop=True)
-	if Time==1: 
-		dateWanted = datetime(2014,3,7,16,6,34,906000)
-	elif Time==2:
-		dateWanted = datetime(2014,3,7,16,41,52,907000) 
-	else: dateWanted = -1
 	for i in range(len(data)):
 		print(data['Date'][i])
-		if data['Date'][i] == dateWanted:break
 		for j in range(len(dateSat)):
 			if abs(dateSat[j]-data['Date'][i])<=timedelta(0,0,0,50):
 				dataSat.append(dateSat[j])
@@ -78,6 +75,7 @@ def getData(Time = 3):
 				zd.append(z[j])
 				latd.append(lat[j])
 				lond.append(lon[j])
+				altd.append(alt[j])
 				del dateSat[:j] 
 				break
 	data["DateSat"] = pd.Series(dataSat)
@@ -86,10 +84,14 @@ def getData(Time = 3):
 	data["z"] = pd.Series(zd)
 	data["Lat"] = pd.Series(latd)
 	data["Lon"] = pd.Series(lond)
-	data = data[['Date', 'DateSat', 'x', 'y', 'z', 'Lat', 'Lon', 'ChType', 'BFO', 'BTO']]#rearrange columns
+	data["Alt"] = pd.Series(altd)
+	data = data[['Date', 'DateSat', 'x', 'y', 'z', 'Lat', 'Lon', 'Alt', 'ChType', 'BFO', 'BTO']]#rearrange columns
 	data.x = data.x.astype(float)
 	data.y = data.y.astype(float)
 	data.z = data.z.astype(float)
+	data.Lon = data.Lon.astype(float)
+	data.Lat = data.Lat.astype(float)
+	data.Alt = data.Alt.astype(float)
 	data.BTO = data.BTO.astype(float)
 	data.BFO = data.BFO.astype(float)
 	return data
@@ -119,7 +121,8 @@ def getBias(posSat):
 	bias = []
 	for i in range(len(data)):
 		if data['ChType'][i]=="R-Channel RX": bias.append(biasR)
-		else: bias.append(biasT)
+		elif data['ChType'][i]=="T-Channel RX": bias.append(biasT)#test
+		else: bias.append(biasR)
 	bias = pd.Series(bias)
 	return bias
 
@@ -128,30 +131,68 @@ def getDistSatPlane(posSat):
 	distSatPlane = (0.5*c*((data["BTO"].values*1e-6)-data["bias"].values)) - distSatGES 
 	return distSatPlane
 
+def remChannelFromData(channel):
+	dropList = []
+	for i in range(len(data)):
+		if data['ChType'][i]==channel:
+			dropList.append(i)	
+			print(data['ChType'][i])
+	newData = data.drop(dropList)
+	newData = newData.reset_index(drop=True)
+	print(newData)
+	return newData
+
+def getArcDates():
+	arcDate = []
+	arcIndexes = [] 
+	arcDate.append(datetime(2014,3,7,18,25,27))
+	arcDate.append(datetime(2014,3,7,19,41,00))
+	arcDate.append(datetime(2014,3,7,20,41,00))
+	arcDate.append(datetime(2014,3,7,21,41,24))
+	arcDate.append(datetime(2014,3,7,22,41,19))
+	arcDate.append(datetime(2014,3,8,0,10,58))
+	arcDate.append(datetime(2014,3,8,0,19,29))
+	for i in range(len(arcDate)):
+		for j in range(len(data)):
+			if abs(data["Date"][j]-arcDate[i])<=timedelta(0,5):
+				print(data["Date"][j], arcDate[i])
+				arcIndexes.append(j)	
+	print(len(arcIndexes))
+	return arcIndexes
+
 inString = inputR("Get data? yes/no: ", ["yes", "no"])
 if inString =="yes":
-	print("Input 1 for 6 mins, Input 2 for 30mins and Input 3 for full flight")
-	inString = inputR("Choice: ", ["1", "2", "3"])
-	data = getData(int(inString))
-	data["bias"] = getBias(data.as_matrix(['x','y','z']))
-	data.bias = data.bias.astype(float)
-	data.to_csv("data")
+	data = getData()
 if inString =="no":
-	data = pd.read_csv("data")
-data["dist"] = getDistSatPlane(data.as_matrix(['x','y','z']))
+	data = pd.read_csv("FinalData.csv")
+	data = data.drop(['Unnamed: 0'], axis=1)
+	data['Date'] = pd.to_datetime(data['Date'], format='%Y-%m-%d %H:%M:%S.%f')
+	data['DateSat'] = pd.to_datetime(data['DateSat'], format='%Y-%m-%d %H:%M:%S.%f')
+
+data["Dist"] = getDistSatPlane(data.as_matrix(['x','y','z']))
+data["bias"] = getBias(data.as_matrix(['x','y','z']))
+data.bias = data.bias.astype(float)
+#data = remChannelFromData("R-Channel RX")#########################################
+
+#Main
+kml = simplekml.Kml()
+sat = kml.newpoint(name='Satelite position at arbitary altitude')
+sat.coords = [(np.mean(data["Lon"].values), np.mean(data["Lat"].values),357860)]
+sat.altitudemode = 'relativeToGround'
 print(data)
+
+arcIndexes = getArcDates()
+arcNo = 0
+for i in arcIndexes:
+	arcNo = arcNo+1
+	radius = (np.square(data["Dist"][i]))-(np.square(data["Alt"][i]))
+	radius = np.sqrt(abs(radius))
+	radius = radius*1000
+	print(radius/1000, "km")
+	circle = pc.Polycircle(latitude=data["Lat"][i], longitude=data["Lon"][i], radius=radius, number_of_vertices=400)
+	pol = kml.newpolygon(name="Arc"+str(arcNo), outerboundaryis=circle.to_kml())
+	pol.style.polystyle.color = '000000ff'  # Transparent 
+	pol.altitudemode = 'clampToGround'
+	pol.tessellate = 1
+kml.save("Flight.kml")
 data.to_csv("FinalData.csv")
-f = open('flight.kml', 'w')
-#Writing the kml file.
-f.write("<?xml version='1.0' encoding='UTF-8'?>\n")
-f.write("<kml xmlns='http://earth.google.com/kml/2.2'>\n")
-f.write("<Document>\n")
-f.write("<Placemark>\n")
-f.write("   <name>Sat</name>\n")
-f.write("   <Point>")
-f.write("     <coordinates>"+ str(np.mean(data["Lon"].values))+","+ str(np.mean(data["Lat"].values))+",35786</coordinates>")#Change Altitude
-f.write("   </Point>")
-f.write("</Placemark>\n")
-f.write("</Document>")
-f.write("</kml>\n")
-f.close()
