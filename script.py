@@ -99,7 +99,7 @@ def getData(Time = 3):
 def inputR(inputText, wantedTextList):
 	inp = False
 	while inp == False:
-		string = input(inputText)
+		string = raw_input(inputText)
 		if string in wantedTextList:inp = True
 	return string 
 
@@ -185,10 +185,11 @@ arcIndexes = getArcDates()
 arcNo = 0
 for i in arcIndexes:
 	arcNo = arcNo+1
-	radius = (np.square(data["Dist"][i]))-(np.square(data["Alt"][i]))
+	radius = (np.square(data["Dist"][i]))-(np.square(data["Alt"][i]-10.5))
 	radius = np.sqrt(abs(radius))
 	radius = radius*1000
-	print(radius/1000, "km")
+	radius = radius/(2*np.pi)
+	print(str(radius/1000)+"km")
 	circle = pc.Polycircle(latitude=data["Lat"][i], longitude=data["Lon"][i], radius=radius, number_of_vertices=400)
 	pol = kml.newpolygon(name="Arc"+str(arcNo), outerboundaryis=circle.to_kml())
 	pol.style.polystyle.color = '000000ff'  # Transparent 
