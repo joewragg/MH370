@@ -119,10 +119,11 @@ def getBias(posSat):
 	biasR = np.mean(biasR)
 	biasT = np.mean(biasT)
 	bias = []
+	meanBias = (biasR+biasT)/2
 	for i in range(len(data)):
-		if data['ChType'][i]=="R-Channel RX": bias.append(biasR)
-		elif data['ChType'][i]=="T-Channel RX": bias.append(biasT)#test
-		else: bias.append(biasR)
+		if data['ChType'][i]=="R-Channel RX": bias.append(meanBias)
+		elif data['ChType'][i]=="T-Channel RX": bias.append(meanBias)#test
+		else: bias.append(meanBias)
 	bias = pd.Series(bias)
 	return bias
 
@@ -139,7 +140,6 @@ def remChannelFromData(channel):
 			print(data['ChType'][i])
 	newData = data.drop(dropList)
 	newData = newData.reset_index(drop=True)
-	print(newData)
 	return newData
 
 def getArcDates():
@@ -157,7 +157,6 @@ def getArcDates():
 			if abs(data["Date"][j]-arcDate[i])<=timedelta(0,5):
 				print(data["Date"][j], arcDate[i])
 				arcIndexes.append(j)	
-	print(len(arcIndexes))
 	return arcIndexes
 
 inString = inputR("Get data? yes/no: ", ["yes", "no"])
@@ -185,15 +184,29 @@ arcIndexes = getArcDates()
 arcNo = 0
 for i in arcIndexes:
 	arcNo = arcNo+1
-	radius = (np.square(data["Dist"][i]))-(np.square(data["Alt"][i]-10.5))
-	radius = np.sqrt(abs(radius))
+	a = data["Dist"][i]
+	b = data["y"][i]
+	#b = data["Alt"][i]+6371
+	print(b)
+	c = 6371+10
+	pheta = np.square(b)+np.square(c)-np.square(a)
+	pheta = pheta / (2*b*c)
+	pheta = np.arccos(pheta)
+	radius = pheta*c
+	a = 2*np.square(c)
+	a = a - ((2*np.square(c))*np.cos(pheta))
+	a = np.sqrt(a)
+	#radius = a	
+	#radius = (np.square(data["Dist"][i]))-(np.square(data["Alt"][i]-10.5))
+	#radius = np.sqrt(abs(radius))
 	radius = radius*1000
-	radius = radius/(2*np.pi)
+	#radius = radius/(2*np.pi)
 	print(str(radius/1000)+"km")
-	circle = pc.Polycircle(latitude=data["Lat"][i], longitude=data["Lon"][i], radius=radius, number_of_vertices=400)
-	pol = kml.newpolygon(name="Arc"+str(arcNo), outerboundaryis=circle.to_kml())
-	pol.style.polystyle.color = '000000ff'  # Transparent 
-	pol.altitudemode = 'clampToGround'
-	pol.tessellate = 1
+	if not np.isnan(radius):
+		circle = pc.Polycircle(latitude=data["Lat"][i], longitude=data["Lon"][i], radius=radius, number_of_vertices=400)
+		pol = kml.newpolygon(name="Arc"+str(arcNo), outerboundaryis=circle.to_kml())
+		pol.style.polystyle.color = '000000ff'  # Transparent 
+		pol.altitudemode = 'clampToGround'
+		pol.tessellate = 0 
 kml.save("Flight.kml")
 data.to_csv("FinalData.csv")
