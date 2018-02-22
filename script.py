@@ -54,7 +54,7 @@ def getData(Time = 3):
 			lat.append(line.split()[10])
 			lon.append(line.split()[11])
 			alt.append(line.split()[12])
-	dataSat = []
+	dateSatd = []
 	xd = []
 	yd = []
 	zd = []
@@ -69,16 +69,23 @@ def getData(Time = 3):
 		print(data['Date'][i])
 		for j in range(len(dateSat)):
 			if abs(dateSat[j]-data['Date'][i])<=timedelta(0,0,0,50):
-				dataSat.append(dateSat[j])
+				dateSatd.append(dateSat[j])
 				xd.append(x[j])
 				yd.append(y[j])
 				zd.append(z[j])
+				print(data["Date"][i], dateSat[j], z[j])
 				latd.append(lat[j])
 				lond.append(lon[j])
 				altd.append(alt[j])
 				del dateSat[:j] 
+				del x[:j]
+				del y[:j]
+				del z[:j]
+				del lat[:j]
+				del lon[:j]
+				del alt[:j]
 				break
-	data["DateSat"] = pd.Series(dataSat)
+	data["DateSat"] = pd.Series(dateSatd)
 	data["x"] = pd.Series(xd)
 	data["y"] = pd.Series(yd)
 	data["z"] = pd.Series(zd)
@@ -94,6 +101,7 @@ def getData(Time = 3):
 	data.Alt = data.Alt.astype(float)
 	data.BTO = data.BTO.astype(float)
 	data.BFO = data.BFO.astype(float)
+	print(data)
 	return data
 
 def inputR(inputText, wantedTextList):
@@ -121,9 +129,9 @@ def getBias(posSat):
 	bias = []
 	meanBias = (biasR+biasT)/2
 	for i in range(len(data)):
-		if data['ChType'][i]=="R-Channel RX": bias.append(meanBias)
-		elif data['ChType'][i]=="T-Channel RX": bias.append(meanBias)#test
-		else: bias.append(meanBias)
+		if data['ChType'][i]=="R-Channel RX": bias.append(biasT)
+		elif data['ChType'][i]=="T-Channel RX": bias.append(biasT)#test
+		else: bias.append(biasR)
 	bias = pd.Series(bias)
 	return bias
 
@@ -167,18 +175,18 @@ if inString =="no":
 	data = data.drop(['Unnamed: 0'], axis=1)
 	data['Date'] = pd.to_datetime(data['Date'], format='%Y-%m-%d %H:%M:%S.%f')
 	data['DateSat'] = pd.to_datetime(data['DateSat'], format='%Y-%m-%d %H:%M:%S.%f')
-
-data["Dist"] = getDistSatPlane(data.as_matrix(['x','y','z']))
 data["bias"] = getBias(data.as_matrix(['x','y','z']))
+data["Dist"] = getDistSatPlane(data.as_matrix(['x','y','z']))
 data.bias = data.bias.astype(float)
 #data = remChannelFromData("R-Channel RX")#########################################
+print(data)
+data.to_csv("FinalData.csv")
 
 #Main
 kml = simplekml.Kml()
 sat = kml.newpoint(name='Satelite position at arbitary altitude')
 sat.coords = [(np.mean(data["Lon"].values), np.mean(data["Lat"].values),357860)]
 sat.altitudemode = 'relativeToGround'
-print(data)
 
 arcIndexes = getArcDates()
 arcNo = 0
@@ -187,7 +195,6 @@ for i in arcIndexes:
 	a = data["Dist"][i]
 	b = data["y"][i]
 	#b = data["Alt"][i]+6371
-	print(b)
 	c = 6371+10
 	pheta = np.square(b)+np.square(c)-np.square(a)
 	pheta = pheta / (2*b*c)
@@ -196,17 +203,12 @@ for i in arcIndexes:
 	a = 2*np.square(c)
 	a = a - ((2*np.square(c))*np.cos(pheta))
 	a = np.sqrt(a)
-	#radius = a	
-	#radius = (np.square(data["Dist"][i]))-(np.square(data["Alt"][i]-10.5))
-	#radius = np.sqrt(abs(radius))
 	radius = radius*1000
-	#radius = radius/(2*np.pi)
 	print(str(radius/1000)+"km")
 	if not np.isnan(radius):
 		circle = pc.Polycircle(latitude=data["Lat"][i], longitude=data["Lon"][i], radius=radius, number_of_vertices=400)
 		pol = kml.newpolygon(name="Arc"+str(arcNo), outerboundaryis=circle.to_kml())
 		pol.style.polystyle.color = '000000ff'  # Transparent 
 		pol.altitudemode = 'clampToGround'
-		pol.tessellate = 0 
+		pol.tessellate = 1 
 kml.save("Flight.kml")
-data.to_csv("FinalData.csv")
