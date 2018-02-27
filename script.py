@@ -1,9 +1,12 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import simplekml
 from polycircles import polycircles as pc
 import math
 import time
 import pandas as pd
+pd.set_option("display.max_rows",999)
+pd.set_option('display.width', 1000)
 from datetime import datetime, timedelta
 from scipy.spatial import distance
 
@@ -32,7 +35,7 @@ def getData(Time = 3):
 	data.rename(columns={'Time':'Date', 'Frequency Offset (Hz)': 'BFO', 'Burst Timing Offset (microseconds)': 'BTO', 'Channel Type': 'ChType'}, inplace=True)
 	data['Date'] = pd.to_datetime(data['Date'], format='%d/%m/%Y %H:%M:%S.%f')
 	#Grab report data
-	Report = open("Report.txt", "r")
+	Report = open("Report", "r")
 	lines = Report.readlines()
 	#Grab report data
 	for i, line in enumerate(lines):
@@ -73,7 +76,6 @@ def getData(Time = 3):
 				xd.append(x[j])
 				yd.append(y[j])
 				zd.append(z[j])
-				print(data["Date"][i], dateSat[j], z[j])
 				latd.append(lat[j])
 				lond.append(lon[j])
 				altd.append(alt[j])
@@ -101,54 +103,40 @@ def getData(Time = 3):
 	data.Alt = data.Alt.astype(float)
 	data.BTO = data.BTO.astype(float)
 	data.BFO = data.BFO.astype(float)
-	print(data)
 	return data
 
 def inputR(inputText, wantedTextList):
 	inp = False
 	while inp == False:
-		string = raw_input(inputText)
+		string = input(inputText)
 		if string in wantedTextList:inp = True
 	return string 
 
-def getDist(posSat):
-	posSat = posSat[~np.isnan(posSat).any(axis=1)]#Take NaNs out of data
+def getBias(posSat):
 	distSatGES = np.linalg.norm(posSat-posGES, axis = 1)
 	distSatAES = np.linalg.norm(posSat-posAES, axis = 1)
-	return distSatGES, distSatAES
-
-def getBias(posSat):
-	distSatGES, distSatAES = getDist(posSat)
 	for i in range(len(data)):
 		if data['ChType'][i]=="R-Channel RX":
 			biasR = (data['BTO'][i]*1e-6) - 2*(distSatAES+distSatGES)/c 
 		if data['ChType'][i]=="T-Channel RX":
-			biasT = (data['BTO'][i]*1e-6) - 2*(distSatAES+distSatGES)/c  #old = (2*(distSatAES+distSatGES))/c + (data['BTO'][i]*1e-6)
-	biasR = np.mean(biasR)
-	biasT = np.mean(biasT)
+			biasT = (data['BTO'][i]*1e-6) - 2*(distSatAES+distSatGES)/c 
 	bias = []
-	meanBias = (biasR+biasT)/2
 	for i in range(len(data)):
-		if data['ChType'][i]=="R-Channel RX": bias.append(biasT)
-		elif data['ChType'][i]=="T-Channel RX": bias.append(biasT)#test
-		else: bias.append(biasR)
+		if data["Date"][i]==datetime(2014,3,7,16,41,52,907000):
+			meanBiasR = np.mean(biasR)
+			meanBiasT = np.mean(biasT)
+			#meanBiasR = np.mean(np.array([biasR,biasT]))
+			meanBiasR = -495679*1e-6
+		if data["Date"][i]<=datetime(2014,3,7,16,29,52,406000):
+			if data['ChType'][i]=="R-Channel RX": bias.append(biasR[i])
+			elif data['ChType'][i]=="T-Channel RX": bias.append(biasT[i])
+			else: bias.append(biasR[i])
+		else:	
+			if data['ChType'][i]=="R-Channel RX": bias.append(meanBiasR)
+			elif data['ChType'][i]=="T-Channel RX": bias.append(meanBiasT)
+			else: bias.append(meanBiasR)
 	bias = pd.Series(bias)
-	return bias
-
-def getDistSatPlane(posSat):
-	distSatGES, distSatAES = getDist(posSat)
-	distSatPlane = (0.5*c*((data["BTO"].values*1e-6)-data["bias"].values)) - distSatGES 
-	return distSatPlane
-
-def remChannelFromData(channel):
-	dropList = []
-	for i in range(len(data)):
-		if data['ChType'][i]==channel:
-			dropList.append(i)	
-			print(data['ChType'][i])
-	newData = data.drop(dropList)
-	newData = newData.reset_index(drop=True)
-	return newData
+	return bias, distSatGES
 
 def getArcDates():
 	arcDate = []
@@ -175,12 +163,11 @@ if inString =="no":
 	data = data.drop(['Unnamed: 0'], axis=1)
 	data['Date'] = pd.to_datetime(data['Date'], format='%Y-%m-%d %H:%M:%S.%f')
 	data['DateSat'] = pd.to_datetime(data['DateSat'], format='%Y-%m-%d %H:%M:%S.%f')
-data["bias"] = getBias(data.as_matrix(['x','y','z']))
-data["Dist"] = getDistSatPlane(data.as_matrix(['x','y','z']))
-data.bias = data.bias.astype(float)
-#data = remChannelFromData("R-Channel RX")#########################################
-print(data)
+data["bias"], distSatGES = getBias(data.as_matrix(['x','y','z']))
+data["Dist"] = (0.5*c*((data["BTO"].values*1e-6)-data["bias"].values)) - distSatGES 
+#print(data)
 data.to_csv("FinalData.csv")
+print(data)
 
 #Main
 kml = simplekml.Kml()
@@ -193,16 +180,14 @@ arcNo = 0
 for i in arcIndexes:
 	arcNo = arcNo+1
 	a = data["Dist"][i]
-	b = data["y"][i]
-	#b = data["Alt"][i]+6371
-	c = 6371+10
+	b = np.square(data["x"][i])+np.square(data["y"][i])+np.square(data["z"][i])
+	b = np.sqrt(b)
+	c = 6371
 	pheta = np.square(b)+np.square(c)-np.square(a)
 	pheta = pheta / (2*b*c)
 	pheta = np.arccos(pheta)
 	radius = pheta*c
-	a = 2*np.square(c)
-	a = a - ((2*np.square(c))*np.cos(pheta))
-	a = np.sqrt(a)
+	datetime(2014,3,7,16,29,52,406000)
 	radius = radius*1000
 	print(str(radius/1000)+"km")
 	if not np.isnan(radius):
