@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import simplekml
 from polycircles import polycircles as pc
 import math
@@ -35,7 +34,7 @@ def getData(Time = 3):
 	data.rename(columns={'Time':'Date', 'Frequency Offset (Hz)': 'BFO', 'Burst Timing Offset (microseconds)': 'BTO', 'Channel Type': 'ChType'}, inplace=True)
 	data['Date'] = pd.to_datetime(data['Date'], format='%d/%m/%Y %H:%M:%S.%f')
 	#Grab report data
-	Report = open("Report", "r")
+	Report = open("Report.txt", "r")
 	lines = Report.readlines()
 	#Grab report data
 	for i, line in enumerate(lines):
@@ -108,33 +107,38 @@ def getData(Time = 3):
 def inputR(inputText, wantedTextList):
 	inp = False
 	while inp == False:
-		string = input(inputText)
+		string = raw_input(inputText)
 		if string in wantedTextList:inp = True
 	return string 
 
 def getBias(posSat):
 	distSatGES = np.linalg.norm(posSat-posGES, axis = 1)
 	distSatAES = np.linalg.norm(posSat-posAES, axis = 1)
+	biasR = []
+	biasT = []
 	for i in range(len(data)):
 		if data['ChType'][i]=="R-Channel RX":
-			biasR = (data['BTO'][i]*1e-6) - 2*(distSatAES+distSatGES)/c 
+			biasR.append((data['BTO'][i]*1e-6) - 2*(distSatAES[i]+distSatGES[i])/c )
 		if data['ChType'][i]=="T-Channel RX":
-			biasT = (data['BTO'][i]*1e-6) - 2*(distSatAES+distSatGES)/c 
+			biasT.append((data['BTO'][i]*1e-6) - 2*(distSatAES[i]+distSatGES[i])/c )
 	bias = []
+	biasRn = 0
+	biasTn = 0
 	for i in range(len(data)):
-		if data["Date"][i]==datetime(2014,3,7,16,41,52,907000):
+		if data["Date"][i]==datetime(2014,3,7,16,41,52,907000):#TakeOff
 			meanBiasR = np.mean(biasR)
 			meanBiasT = np.mean(biasT)
-			#meanBiasR = np.mean(np.array([biasR,biasT]))
-			meanBiasR = -495679*1e-6
-		if data["Date"][i]<=datetime(2014,3,7,16,29,52,406000):
-			if data['ChType'][i]=="R-Channel RX": bias.append(biasR[i])
-			elif data['ChType'][i]=="T-Channel RX": bias.append(biasT[i])
-			else: bias.append(biasR[i])
-		else:	
+			#meanBiasR = np.mean(np.append(biasR, biasT))
+		if data["Date"][i]<=datetime(2014,3,7,16,29,52,406000):#preTakeOff
+			if data['ChType'][i]=="R-Channel RX":
+				bias.append(biasR[biasRn])
+				biasRn = biasRn+1
+			elif data['ChType'][i]=="T-Channel RX":
+				bias.append(biasT[biasTn])
+				biasTn = biasTn+1
+		else:#postTakeOff	
 			if data['ChType'][i]=="R-Channel RX": bias.append(meanBiasR)
 			elif data['ChType'][i]=="T-Channel RX": bias.append(meanBiasT)
-			else: bias.append(meanBiasR)
 	bias = pd.Series(bias)
 	return bias, distSatGES
 
@@ -158,14 +162,18 @@ def getArcDates():
 inString = inputR("Get data? yes/no: ", ["yes", "no"])
 if inString =="yes":
 	data = getData()
+	arcDates = getArcDates()
+	data["BTO"][arcDates[0]] = data.iloc[arcDates[0]].loc["BTO"]-4600
+	data["BTO"][arcDates[6]] = data.iloc[arcDates[6]].loc["BTO"]-4600
 if inString =="no":
 	data = pd.read_csv("FinalData.csv")
 	data = data.drop(['Unnamed: 0'], axis=1)
 	data['Date'] = pd.to_datetime(data['Date'], format='%Y-%m-%d %H:%M:%S.%f')
 	data['DateSat'] = pd.to_datetime(data['DateSat'], format='%Y-%m-%d %H:%M:%S.%f')
+	arcDates = getArcDates()
+
 data["bias"], distSatGES = getBias(data.as_matrix(['x','y','z']))
 data["Dist"] = (0.5*c*((data["BTO"].values*1e-6)-data["bias"].values)) - distSatGES 
-#print(data)
 data.to_csv("FinalData.csv")
 print(data)
 
@@ -175,7 +183,7 @@ sat = kml.newpoint(name='Satelite position at arbitary altitude')
 sat.coords = [(np.mean(data["Lon"].values), np.mean(data["Lat"].values),357860)]
 sat.altitudemode = 'relativeToGround'
 
-arcIndexes = getArcDates()
+arcIndexes = arcDates
 arcNo = 0
 for i in arcIndexes:
 	arcNo = arcNo+1
@@ -191,7 +199,7 @@ for i in arcIndexes:
 	radius = radius*1000
 	print(str(radius/1000)+"km")
 	if not np.isnan(radius):
-		circle = pc.Polycircle(latitude=data["Lat"][i], longitude=data["Lon"][i], radius=radius, number_of_vertices=400)
+		circle = pc.Polycircle(latitude=data["Lat"][i], longitude=data["Lon"][i], radius=radius, number_of_vertices=800)
 		pol = kml.newpolygon(name="Arc"+str(arcNo), outerboundaryis=circle.to_kml())
 		pol.style.polystyle.color = '000000ff'  # Transparent 
 		pol.altitudemode = 'clampToGround'
