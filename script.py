@@ -18,6 +18,8 @@ posAES = np.array([-1293.0, 6238.3, 303.5])
 c = 299792458/1000#km/s 
 
 def getData(Time = 3):
+	x = []
+	y = []
 	z = []
 	vx = []
 	vy = []
@@ -25,10 +27,7 @@ def getData(Time = 3):
 	lat = []
 	lon = []
 	dateSat = []
-	x = []
-	y = []
 	alt = []
-		#begin
 	#Grab InmarSat Data
 	data = pd.read_csv("inmarsat.csv", usecols=[0,8,25,27])
 	data.rename(columns={'Time':'Date', 'Frequency Offset (Hz)': 'BFO', 'Burst Timing Offset (microseconds)': 'BTO', 'Channel Type': 'ChType'}, inplace=True)
@@ -187,9 +186,11 @@ if inString =="no":
 	data['Date'] = pd.to_datetime(data['Date'], format='%Y-%m-%d %H:%M:%S.%f')
 	data['DateSat'] = pd.to_datetime(data['DateSat'], format='%Y-%m-%d %H:%M:%S.%f')
 	arcDates = getArcDates()
-pd.options.mode.chained_assignment = None
+
+#Some more data assignment
 data["bias"], distSatGES = getBias(data.as_matrix(['x','y','z']))
 data["Dist"] = (0.5*c*((data["BTO"].values*1e-6)-data["bias"].values)) - distSatGES 
+pd.options.mode.chained_assignment = None
 deltaSatAFC = np.zeros(len(data))
 deltaFBias = np.full(len(data), 152.5)
 data["deltaSatAFC"] = pd.Series(np.asarray(deltaSatAFC))
@@ -205,23 +206,12 @@ data["deltaSatAFC"][arcDates[5]] = -37.7
 data["deltaSatAFC"][arcDates[6]] = -38.0
 data = data[data.deltaSatAFC != 0]
 data = data.reset_index(drop=True)
-deltaFDown = []
-for i in range(len(data)):
-	v = np.array([data["vx"][i], data["vy"][i], data["vz"][i]], dtype=float)
-	s = np.array([data["x"][i], data["y"][i], data["z"][i]], dtype=float)
-	s = s-posGES
-	vS = np.dot(v, s)/np.linalg.norm(s)
-	FDown = 3615.1525e6
-	deltaFDown.append(FDown*((c/(c+vS))-1))
-data["deltaFDown"] = pd.Series(deltaFDown)
-data.deltaFDown = data.deltaFDown.astype(float)
-print(data)
-#Main
+
+#BTO Analysis
 kml = simplekml.Kml()
 sat = kml.newpoint(name='Satelite position at arbitary altitude')
 sat.coords = [(np.mean(data["Lon"].values), np.mean(data["Lat"].values),357860)]
 sat.altitudemode = 'relativeToGround'
-
 arcIndexes = arcDates
 arcNo = 0
 for i in range(len(data)):
@@ -244,4 +234,17 @@ for i in range(len(data)):
 		pol.altitudemode = 'clampToGround'
 		pol.tessellate = 1 
 kml.save("Flight.kml")
+
+#BFO Analysis
+deltaFDown = []
+for i in range(len(data)):
+	v = np.array([data["vx"][i], data["vy"][i], data["vz"][i]], dtype=float)
+	s = np.array([data["x"][i], data["y"][i], data["z"][i]], dtype=float)
+	s = s-posGES
+	vS = np.dot(v, s)/np.linalg.norm(s)
+	FDown = 3615.1525e6
+	deltaFDown.append(FDown*((c/(c+vS))-1))
+data["deltaFDown"] = pd.Series(deltaFDown)
+data.deltaFDown = data.deltaFDown.astype(float)
+print(data)
 data.to_csv("FinalData.csv")
