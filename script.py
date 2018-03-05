@@ -15,7 +15,7 @@ from scipy.spatial import distance
 #Constants
 posGES = np.array([-2368.8, 4881.1, -3342.0])
 posAES = np.array([-1293.0, 6238.3, 303.5])
-c = 3e5
+c = 299792458/1000#km/s 
 
 def getData(Time = 3):
 	z = []
@@ -122,7 +122,7 @@ def getData(Time = 3):
 def inputR(inputText, wantedTextList):
 	inp = False
 	while inp == False:
-		string = raw_input(inputText)
+		string = input(inputText)
 		if string in wantedTextList:inp = True
 	return string 
 
@@ -187,7 +187,7 @@ if inString =="no":
 	data['Date'] = pd.to_datetime(data['Date'], format='%Y-%m-%d %H:%M:%S.%f')
 	data['DateSat'] = pd.to_datetime(data['DateSat'], format='%Y-%m-%d %H:%M:%S.%f')
 	arcDates = getArcDates()
-
+pd.options.mode.chained_assignment = None
 data["bias"], distSatGES = getBias(data.as_matrix(['x','y','z']))
 data["Dist"] = (0.5*c*((data["BTO"].values*1e-6)-data["bias"].values)) - distSatGES 
 deltaSatAFC = np.zeros(len(data))
@@ -205,8 +205,16 @@ data["deltaSatAFC"][arcDates[5]] = -37.7
 data["deltaSatAFC"][arcDates[6]] = -38.0
 data = data[data.deltaSatAFC != 0]
 data = data.reset_index(drop=True)
+deltaFDown = []
 for i in range(len(data)):
-	
+	v = np.array([data["vx"][i], data["vy"][i], data["vz"][i]], dtype=float)
+	s = np.array([data["x"][i], data["y"][i], data["z"][i]], dtype=float)
+	s = s-posGES
+	vS = np.dot(v, s)/np.linalg.norm(s)
+	FDown = 3615.1525e6
+	deltaFDown.append(FDown*((c/(c+vS))-1))
+data["deltaFDown"] = pd.Series(deltaFDown)
+data.deltaFDown = data.deltaFDown.astype(float)
 print(data)
 #Main
 kml = simplekml.Kml()
@@ -216,7 +224,7 @@ sat.altitudemode = 'relativeToGround'
 
 arcIndexes = arcDates
 arcNo = 0
-for i in arcIndexes:
+for i in range(len(data)):
 	arcNo = arcNo+1
 	a = data["Dist"][i]
 	b = np.square(data["x"][i])+np.square(data["y"][i])+np.square(data["z"][i])
