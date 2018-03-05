@@ -50,9 +50,9 @@ def getData(Time = 3):
 			x.append(line.split()[4])
 			y.append(line.split()[5])
 			z.append(line.split()[6])
-			#vx.append(line.split()[7])
-			#vy.append(line.split()[8])
-			#vz.append(line.split()[9])
+			vx.append(line.split()[7])
+			vy.append(line.split()[8])
+			vz.append(line.split()[9])
 			lat.append(line.split()[10])
 			lon.append(line.split()[11])
 			alt.append(line.split()[12])
@@ -60,6 +60,9 @@ def getData(Time = 3):
 	xd = []
 	yd = []
 	zd = []
+	vxd = []
+	vyd = []
+	vzd = []
 	lond = []
 	latd = []
 	altd = []
@@ -75,6 +78,9 @@ def getData(Time = 3):
 				xd.append(x[j])
 				yd.append(y[j])
 				zd.append(z[j])
+				vxd.append(vx[j])
+				vyd.append(vy[j])
+				vzd.append(vz[j])
 				latd.append(lat[j])
 				lond.append(lon[j])
 				altd.append(alt[j])
@@ -82,6 +88,9 @@ def getData(Time = 3):
 				del x[:j]
 				del y[:j]
 				del z[:j]
+				del vx[:j]
+				del vy[:j]
+				del vz[:j]
 				del lat[:j]
 				del lon[:j]
 				del alt[:j]
@@ -90,13 +99,19 @@ def getData(Time = 3):
 	data["x"] = pd.Series(xd)
 	data["y"] = pd.Series(yd)
 	data["z"] = pd.Series(zd)
+	data["vx"] = pd.Series(vxd)
+	data["vy"] = pd.Series(vyd)
+	data["vz"] = pd.Series(vzd)
 	data["Lat"] = pd.Series(latd)
 	data["Lon"] = pd.Series(lond)
 	data["Alt"] = pd.Series(altd)
-	data = data[['Date', 'DateSat', 'x', 'y', 'z', 'Lat', 'Lon', 'Alt', 'ChType', 'BFO', 'BTO']]#rearrange columns
+	data = data[['Date', 'DateSat', 'x', 'y', 'z', 'vx', 'vy', 'vz', 'Lat', 'Lon', 'Alt', 'ChType', 'BTO', 'BFO']]#rearrange columns
 	data.x = data.x.astype(float)
 	data.y = data.y.astype(float)
 	data.z = data.z.astype(float)
+	data.vx = data.vx.astype(float)
+	data.vy = data.vy.astype(float)
+	data.vz = data.vz.astype(float)
 	data.Lon = data.Lon.astype(float)
 	data.Lat = data.Lat.astype(float)
 	data.Alt = data.Alt.astype(float)
@@ -144,7 +159,7 @@ def getBias(posSat):
 
 def getArcDates():
 	arcDate = []
-	arcIndexes = [] 
+	arcIndexes = [] 			
 	arcDate.append(datetime(2014,3,7,18,25,27))
 	arcDate.append(datetime(2014,3,7,19,41,00))
 	arcDate.append(datetime(2014,3,7,20,41,00))
@@ -165,8 +180,9 @@ if inString =="yes":
 	arcDates = getArcDates()
 	data["BTO"][arcDates[0]] = data.iloc[arcDates[0]].loc["BTO"]-4600
 	data["BTO"][arcDates[6]] = data.iloc[arcDates[6]].loc["BTO"]-4600
+	data.to_csv("Data.csv")
 if inString =="no":
-	data = pd.read_csv("FinalData.csv")
+	data = pd.read_csv("Data.csv")
 	data = data.drop(['Unnamed: 0'], axis=1)
 	data['Date'] = pd.to_datetime(data['Date'], format='%Y-%m-%d %H:%M:%S.%f')
 	data['DateSat'] = pd.to_datetime(data['DateSat'], format='%Y-%m-%d %H:%M:%S.%f')
@@ -174,9 +190,24 @@ if inString =="no":
 
 data["bias"], distSatGES = getBias(data.as_matrix(['x','y','z']))
 data["Dist"] = (0.5*c*((data["BTO"].values*1e-6)-data["bias"].values)) - distSatGES 
-data.to_csv("FinalData.csv")
+deltaSatAFC = np.zeros(len(data))
+deltaFBias = np.full(len(data), 152.5)
+data["deltaSatAFC"] = pd.Series(np.asarray(deltaSatAFC))
+data["deltaFBias"] = pd.Series(np.asarray(deltaFBias))
+data.deltaSatAFC = data.deltaSatAFC.astype(float)
+data.deltaFBias = data.deltaFBias.astype(float)
+data["deltaSatAFC"][arcDates[0]] = 10.8
+data["deltaSatAFC"][arcDates[1]] = -1.2
+data["deltaSatAFC"][arcDates[2]] = -1.3
+data["deltaSatAFC"][arcDates[3]] = -17.9
+data["deltaSatAFC"][arcDates[4]] = -28.5
+data["deltaSatAFC"][arcDates[5]] = -37.7
+data["deltaSatAFC"][arcDates[6]] = -38.0
+data = data[data.deltaSatAFC != 0]
+data = data.reset_index(drop=True)
+for i in range(len(data)):
+	
 print(data)
-
 #Main
 kml = simplekml.Kml()
 sat = kml.newpoint(name='Satelite position at arbitary altitude')
@@ -205,3 +236,4 @@ for i in arcIndexes:
 		pol.altitudemode = 'clampToGround'
 		pol.tessellate = 1 
 kml.save("Flight.kml")
+data.to_csv("FinalData.csv")
