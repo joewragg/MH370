@@ -7,6 +7,8 @@ import pandas as pd
 pd.set_option("display.max_rows",999)
 pd.set_option('display.width', 1000)
 from datetime import datetime, timedelta
+import geopy
+from geopy.distance import VincentyDistance
 from scipy.spatial import distance
 
 #Var
@@ -121,7 +123,7 @@ def getData(Time = 3):
 def inputR(inputText, wantedTextList):
 	inp = False
 	while inp == False:
-		string = raw_input(inputText)
+		string = input(inputText)
 		if string in wantedTextList:inp = True
 	return string 
 
@@ -218,13 +220,33 @@ data["deltaSatAFC"][arcDates[6]] = -38.0
 data = data[data.deltaSatAFC != 0]
 data = data.reset_index(drop=True)
 
+def drawPoint(Name, Lat, Lon, Alt):
+	pnt = kml.newpoint(name= Name)
+	pnt.coords = [(Lon, Lat, Alt)]
+	pnt.altitudemode = 'relativeToGround'
+	return 1
+
+def drawCircle(Name, Lat, Lon, Radius, color):
+	circle = pc.Polycircle(latitude=Lat, longitude=Lon, radius=Radius, number_of_vertices=800)
+	pol = kml.newpolygon(name=Name, outerboundaryis=circle.to_kml())
+	pol.style.polystyle.color ="000000ff"   # Transparent 
+	pol.style.linestyle.color = color
+	pol.altitudemode = 'clampToGround'
+	pol.tessellate = 1 
+	return circle
+
+def drawLine(Name, originLat, originLon, destLat, destLon):
+	ls = kml.newlinestring(name = Name)
+	ls.coords = [(originLon, originLat), (destLon, destLat)]
+	return 1
+
 #BTO Analysis
 kml = simplekml.Kml()
-sat = kml.newpoint(name='Satelite position at arbitary altitude')
-sat.coords = [(np.mean(data["Lon"].values), np.mean(data["Lat"].values),357860)]
-sat.altitudemode = 'relativeToGround'
+drawPoint("Satposition", np.mean(data["Lon"].values), np.mean(data["Lat"].values),357860)
 arcIndexes = arcDates
 arcNo = 0
+
+circles = []
 for i in range(len(data)):
 	arcNo = arcNo+1
 	a = data["Dist"][i]
@@ -237,13 +259,8 @@ for i in range(len(data)):
 	radius = pheta*c
 	datetime(2014,3,7,16,29,52,406000)
 	radius = radius*1000
+	circles.append(drawCircle("Arc"+str(arcNo), data["Lat"][i], data["Lon"][i], radius, simplekml.Color.white))
 	print(str(radius/1000)+"km")
-	if not np.isnan(radius):
-		circle = pc.Polycircle(latitude=data["Lat"][i], longitude=data["Lon"][i], radius=radius, number_of_vertices=800)
-		pol = kml.newpolygon(name="Arc"+str(arcNo), outerboundaryis=circle.to_kml())
-		pol.style.polystyle.color = '000000ff'  # Transparent 
-		pol.altitudemode = 'clampToGround'
-		pol.tessellate = 1 
 
 def getFComp(posPl, speed, posSat):
 	v = v/1000
@@ -256,8 +273,9 @@ def getFComp(posPl, speed, posSat):
 	Fup = 1646.6525*1e6
 	deltaFComp = Fup*(((c+vs)/c)-1)
 	return deltaFComp
+
 #Get1stArcPosition
-lastTime = datetime(2014,3,7,17,06,43)
+lastTime = datetime(2014,3,7,17,6,43)
 lat = 5.27
 lon = 102.79
 alt = 10668#35kfeet
@@ -265,11 +283,26 @@ deltaT = abs(lastTime-data["Date"][0])
 deltaT = deltaT.total_seconds()
 speed = 243.322
 radius = speed*deltaT
-circle = pc.Polycircle(latitude=lat, longitude=lon, radius=radius, number_of_vertices=800)
-pol = kml.newpolygon(name="Last", outerboundaryis=circle.to_kml())
-pol.style.polystyle.color = '0000001e'  # Transparent 
-pol.altitudemode = 'clampToGround'
-pol.tessellate = 1 
+drawCircle("FirstFlight", lat, lon, radius, simplekml.Color.red)
+origin = geopy.Point(lat, lon, alt)
+bearing = 25-90#ETN???
+destination = VincentyDistance(kilometers=radius*1e-3).destination(origin, bearing)
+drawPoint("17:06", origin.latitude, origin.longitude, alt)
+print('\n')
+distArr = []
+j = []
+for i in range(len(circles[0].to_lat_lon())):
+	destination = geopy.Point(circles[0].to_lat_lon()[i][0], circles[0].to_lat_lon()[i][1], alt)
+	distance = VincentyDistance(origin, destination).meters	
+	dist = abs(distance-radius)
+	distArr.append(dist)
+	if dist > distArr[i-1] and distArr[i-1]==min(distArr):j.append(i-1)
+northJ = j[0]
+southJ = j[1]
+drawLine("north", origin.latitude, origin.longitude, circles[0].to_lat_lon()[northJ][0], circles[0].to_lat_lon()[northJ][1])
+drawLine("south", origin.latitude, origin.longitude, circles[0].to_lat_lon()[southJ][0], circles[0].to_lat_lon()[southJ][1])
+drawPoint("lastNorth", circles[0].to_lat_lon()[northJ][0], circles[0].to_lat_lon()[northJ][1], alt)
+drawPoint("lastSouth", circles[0].to_lat_lon()[southJ][0], circles[0].to_lat_lon()[southJ][1], alt)
 kml.save("Flight.kml")
 
 #BFO Analysis
