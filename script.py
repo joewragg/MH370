@@ -173,6 +173,13 @@ def getArcDates():
 				arcIndexes.append(j)	
 	return arcIndexes
 
+def lla_to_ecef(lat, lon, alt):
+    import pyproj
+    ecef = pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84')
+    lla = pyproj.Proj(proj='latlong', ellps='WGS84', datum='WGS84')
+    x, y, z = pyproj.transform(lla, ecef, lon, lat, alt, radians=False)
+    return x, y, z
+
 inString = inputR("Get data? yes/no: ", ["yes", "no"])
 if inString =="yes":
 	data = getData()
@@ -204,6 +211,10 @@ data["deltaSatAFC"][arcDates[3]] = -17.9
 data["deltaSatAFC"][arcDates[4]] = -28.5
 data["deltaSatAFC"][arcDates[5]] = -37.7
 data["deltaSatAFC"][arcDates[6]] = -38.0
+
+#print(data)
+
+#print(data)
 data = data[data.deltaSatAFC != 0]
 data = data.reset_index(drop=True)
 
@@ -233,6 +244,32 @@ for i in range(len(data)):
 		pol.style.polystyle.color = '000000ff'  # Transparent 
 		pol.altitudemode = 'clampToGround'
 		pol.tessellate = 1 
+
+def getFComp(posPl, speed, posSat):
+	v = v/1000
+	#sat = [0,64.5,35786*1e3]
+	#sat = lla_to_ecef(sat[0], sat[1], sat[2])
+	#sat = np.array(sat)*1e-3
+	s = posSat-posPl
+	vs = np.dot(v,s)
+	vs = vs/np.linalg.norm(s)
+	Fup = 1646.6525*1e6
+	deltaFComp = Fup*(((c+vs)/c)-1)
+	return deltaFComp
+#Get1stArcPosition
+lastTime = datetime(2014,3,7,17,06,43)
+lat = 5.27
+lon = 102.79
+alt = 10668#35kfeet
+deltaT = abs(lastTime-data["Date"][0])
+deltaT = deltaT.total_seconds()
+speed = 243.322
+radius = speed*deltaT
+circle = pc.Polycircle(latitude=lat, longitude=lon, radius=radius, number_of_vertices=800)
+pol = kml.newpolygon(name="Last", outerboundaryis=circle.to_kml())
+pol.style.polystyle.color = '0000001e'  # Transparent 
+pol.altitudemode = 'clampToGround'
+pol.tessellate = 1 
 kml.save("Flight.kml")
 
 #BFO Analysis
