@@ -121,7 +121,7 @@ def getData(Time = 3):
 def inputR(inputText, wantedTextList):
 	inp = False
 	while inp == False:
-		string = input(inputText)
+		string = raw_input(inputText)
 		if string in wantedTextList:inp = True
 	return string 
 
