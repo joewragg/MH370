@@ -123,7 +123,7 @@ def getData(Time = 3):
 def inputR(inputText, wantedTextList):
 	inp = False
 	while inp == False:
-		string = input(inputText)
+		string = raw_input(inputText)
 		if string in wantedTextList:inp = True
 	return string 
 
@@ -171,7 +171,6 @@ def getArcDates():
 	for i in range(len(arcDate)):
 		for j in range(len(data)):
 			if abs(data["Date"][j]-arcDate[i])<=timedelta(0,5):
-				print(data["Date"][j], arcDate[i])
 				arcIndexes.append(j)	
 	return arcIndexes
 
@@ -214,9 +213,6 @@ data["deltaSatAFC"][arcDates[4]] = -28.5
 data["deltaSatAFC"][arcDates[5]] = -37.7
 data["deltaSatAFC"][arcDates[6]] = -38.0
 
-#print(data)
-
-#print(data)
 data = data[data.deltaSatAFC != 0]
 data = data.reset_index(drop=True)
 
@@ -227,7 +223,7 @@ def drawPoint(Name, Lat, Lon, Alt):
 	return 1
 
 def drawCircle(Name, Lat, Lon, Radius, color):
-	circle = pc.Polycircle(latitude=Lat, longitude=Lon, radius=Radius, number_of_vertices=800)
+	circle = pc.Polycircle(latitude=Lat, longitude=Lon, radius=Radius, number_of_vertices=8000)
 	pol = kml.newpolygon(name=Name, outerboundaryis=circle.to_kml())
 	pol.style.polystyle.color ="000000ff"   # Transparent 
 	pol.style.linestyle.color = color
@@ -295,8 +291,7 @@ for i in range(len(circles[0].to_lat_lon())):
 	destination = geopy.Point(circles[0].to_lat_lon()[i][0], circles[0].to_lat_lon()[i][1], alt)
 	distance = VincentyDistance(origin, destination).meters	
 	dist = abs(distance-radius)
-	distArr.append(dist)
-	if dist > distArr[i-1] and distArr[i-1]==min(distArr):j.append(i-1)
+	if dist<500:j.append(i)
 northJ = j[0]
 southJ = j[1]
 drawLine("north", origin.latitude, origin.longitude, circles[0].to_lat_lon()[northJ][0], circles[0].to_lat_lon()[northJ][1])
