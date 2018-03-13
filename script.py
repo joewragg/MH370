@@ -250,11 +250,14 @@ for i in range(len(data)):
 	a = data["Dist"][i]
 	b = np.square(data["x"][i])+np.square(data["y"][i])+np.square(data["z"][i])
 	b = np.sqrt(b)
-	c = 6371
+	c = b-data["Alt"][i]
+	c = 6471
 	pheta = np.square(b)+np.square(c)-np.square(a)
 	pheta = pheta / (2*b*c)
 	pheta = np.arccos(pheta)
 	radius = pheta*c
+	#origin = geopy.Point(data["Lat"][i], data["Lon"][i], data["Alt"][i])
+	#dest = geopy.Point()
 	datetime(2014,3,7,16,29,52,406000)
 	radius = radius*1000
 	circles.append(drawCircle("Arc"+str(arcNo), data["Lat"][i], data["Lon"][i], radius, simplekml.Color.white))
@@ -328,13 +331,15 @@ dest = geopy.Point(6.65, 96.34, alt)
 drawPoint("18:22:", dest.latitude, dest.longitude, alt)
 drawLine("Path4", origin.latitude, origin.longitude, dest.latitude, dest.longitude, simplekml.Color.red)
 
+speed = 320
 origin = dest
 lastTime = time
 time = data["Date"][0]
 deltaT = abs(lastTime-time).total_seconds()
 radius = speed*deltaT
+print(radius, deltaT)
+print(origin.latitude, origin.longitude)
 dest = findShortest("test", radius, origin, alt, circles[0], "North")	
-
 for i in range(len(data)-1):
 	origin = dest
 	deltaT = abs(data["Date"][i+1]-data["Date"][i]).total_seconds()
@@ -342,7 +347,6 @@ for i in range(len(data)-1):
 	dest = findShortest("test", radius, origin, alt, circles[i+1], "South")
 print('\n')
 kml.save("Flight.kml")###########################################################
-
 
 #BFO Analysis
 deltaFDown = []
