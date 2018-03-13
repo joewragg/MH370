@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 import geopy
 from geopy.distance import VincentyDistance
 from scipy.spatial import distance
+from sympy.solvers import solve
+from sympy import Symbol
 
 #Var
 
@@ -18,7 +20,7 @@ from scipy.spatial import distance
 posGES = np.array([-2368.8, 4881.1, -3342.0])
 posAES = np.array([-1293.0, 6238.3, 303.5])
 c = 299792458/1000#km/s 
-iterationConstant = 8000
+iterationConstant = 800
 alt = 10668*1e-3
 
 def getData(Time = 3):
@@ -289,44 +291,46 @@ def findShortest(name, radius, origin, alt, circle, direction):
 			minDist = dist
 			j = i
 		lastDist = dist
-	drawLine(name, origin.latitude, origin.longitude, circle[j][0], circle[j][1], simplekml.Color.red)
 	return geopy.Point(circle[j][0], circle[j][1], alt)
+
+def drawPath(origin, dest, time, no):
+	if time.minute<10:
+		drawPoint(str(time.hour)+":0"+str(time.minute), dest.latitude, dest.longitude, alt)
+	else:
+		drawPoint(str(time.hour)+":"+str(time.minute), dest.latitude, dest.longitude, alt)
+	drawLine("Path"+str(no), origin.latitude, origin.longitude, dest.latitude, dest.longitude, simplekml.Color.red)
+	return 1 
+
+def getDest(origin, lastTime, time, bearing):
+	deltaT = abs(lastTime-time).total_seconds()
+	radius = speed*deltaT
+	dest = VincentyDistance(kilometers=radius*1e-3).destination(origin, bearing)
+	return dest
 
 alt = alt*1000
 speed = 243.322
+time = datetime(2014,3,7,17,6,43)
 origin = geopy.Point(2.7, 101.7, 0)
 dest = geopy.Point(5.27, 102.79, alt)
-drawPoint("17:06", dest.latitude, dest.longitude, alt)
-drawLine("Path1", origin.latitude, origin.longitude, dest.latitude, dest.longitude, simplekml.Color.red)
+drawPath(origin, dest, time, 1) 
 
 origin = dest
-lastTime = datetime(2014,3,7,17,6,43)
-bearing = 25
+lastTime = time
 time = datetime(2014, 3, 7, 17, 21, 13)
-deltaT = abs(lastTime-time).total_seconds()
-radius = speed*deltaT
-dest = VincentyDistance(kilometers=radius*1e-3).destination(origin, bearing)
-drawPoint("17:21", dest.latitude, dest.longitude, alt)
-drawLine("Path2", origin.latitude, origin.longitude, dest.latitude, dest.longitude, simplekml.Color.red)
+dest = getDest(origin, lastTime, time, 25)
+drawPath(origin, dest, time, 2)
 
 origin = dest
 lastTime = time
 time = datetime(2014,3,7,17,52,27)
-deltaT = abs(lastTime-time).total_seconds()
-radius = speed*deltaT
-print(radius)
 dest = geopy.Point(5.2, 100.2, alt)
-drawPoint("17:52", dest.latitude, dest.longitude, alt)
-drawLine("Path3", origin.latitude, origin.longitude, dest.latitude, dest.longitude, simplekml.Color.red)
+drawPath(origin, dest, time, 3)
 
 origin = dest
 lastTime = time
 time = datetime(2014,3,7,18,22,12)
-deltaT = abs(lastTime-time).total_seconds()
-radius = speed*deltaT
 dest = geopy.Point(6.65, 96.34, alt)
-drawPoint("18:22:", dest.latitude, dest.longitude, alt)
-drawLine("Path4", origin.latitude, origin.longitude, dest.latitude, dest.longitude, simplekml.Color.red)
+drawPath(origin, dest, time, 4)
 
 speed = 320
 origin = dest
@@ -335,13 +339,18 @@ time = data["Date"][0]
 deltaT = abs(lastTime-time).total_seconds()
 radius = speed*deltaT
 dest = findShortest("test", radius, origin, alt, circles[0], "North")	
+firstArcPos = dest
+drawPath(origin, dest, time, 5)
+
 for i in range(len(data)-1):
 	origin = dest
 	deltaT = abs(data["Date"][i+1]-data["Date"][i]).total_seconds()
 	radius = speed*deltaT
 	print(data["Date"][i].hour)
+	time = data["Date"][i]
 	dest = findShortest("test", radius, origin, alt, circles[i+1], "South")
-	drawPoint(str(data["Date"][i].hour)+":"+str(data["Date"][i].minute), dest.latitude, dest.longitude, alt)
+	if i==0:secondArcPos = dest
+	drawPath(origin, dest, time, 5+i)
 print('\n')
 
 kml.save("Flight.kml")###########################################################
@@ -356,5 +365,22 @@ for i in range(len(data)):
 	deltaFDown.append(FDown*((c/(c+vS))-1))
 data["deltaFDown"] = pd.Series(deltaFDown)
 data.deltaFDown = data.deltaFDown.astype(float)
+
+#Arc0
+speed = 243.322
 print(data)
+for i in range(len(data)):
+	Bias = data["deltaFDown"][i]+deltaSatAFC+deltaFBias
+	Fup = 1646.6525
+	v = np.array([data["vx"][i], data["vy"][i], data["vz"][i]], dtype=float)
+	sat = np.array([data["x"][i], data["y"][i], data["z"][i]], dtype=float)
+	origin = firstArcPos
+	origin = lla_to_ecef(origin.latitude, origin.longitude, alt)
+	origin = np.asarray(origin)
+	origin = origin/1000
+	s = sat - origin
+	vS = np.dot(v, s)/np.linalg.norm(s)
+	print(vS)
+	v = Symbol('v')
+	print(solve(data["BTO"][i]-(Fup*(((c-vS)/(c-v))-1))-(Fup*(((c+v)/c)-1))-Bias, v))
 data.to_csv("FinalData.csv")
