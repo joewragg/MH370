@@ -18,7 +18,8 @@ from scipy.spatial import distance
 posGES = np.array([-2368.8, 4881.1, -3342.0])
 posAES = np.array([-1293.0, 6238.3, 303.5])
 c = 299792458/1000#km/s 
-iterationConstant = 800
+iterationConstant = 8000
+alt = 10668*1e-3
 
 def getData(Time = 3):
 	x = []
@@ -124,7 +125,7 @@ def getData(Time = 3):
 def inputR(inputText, wantedTextList):
 	inp = False
 	while inp == False:
-		string = raw_input(inputText)
+		string = input(inputText)
 		if string in wantedTextList:inp = True
 	return string 
 
@@ -250,14 +251,12 @@ for i in range(len(data)):
 	a = data["Dist"][i]
 	b = np.square(data["x"][i])+np.square(data["y"][i])+np.square(data["z"][i])
 	b = np.sqrt(b)
-	c = b-data["Alt"][i]
-	c = 6471
+	c = b-data["Alt"][i]+alt+73
+	#c = 6371+alt+50
 	pheta = np.square(b)+np.square(c)-np.square(a)
 	pheta = pheta / (2*b*c)
 	pheta = np.arccos(pheta)
-	radius = pheta*c
-	#origin = geopy.Point(data["Lat"][i], data["Lon"][i], data["Alt"][i])
-	#dest = geopy.Point()
+	radius = c*pheta
 	datetime(2014,3,7,16,29,52,406000)
 	radius = radius*1000
 	circles.append(drawCircle("Arc"+str(arcNo), data["Lat"][i], data["Lon"][i], radius, simplekml.Color.white))
@@ -283,7 +282,6 @@ def findShortest(name, radius, origin, alt, circle, direction):
 		destination = geopy.Point(circle[i][0], circle[i][1], alt)
 		distance = VincentyDistance(origin, destination).meters	
 		dist = distance-radius
-		print(dist)
 		if (lastDist>0) and (dist<0) and (direction=="North"):
 			minDist = dist
 			j = i
@@ -291,12 +289,11 @@ def findShortest(name, radius, origin, alt, circle, direction):
 			minDist = dist
 			j = i
 		lastDist = dist
-	print(minDist)
 	drawLine(name, origin.latitude, origin.longitude, circle[j][0], circle[j][1], simplekml.Color.red)
 	return geopy.Point(circle[j][0], circle[j][1], alt)
 
+alt = alt*1000
 speed = 243.322
-alt = 10668
 origin = geopy.Point(2.7, 101.7, 0)
 dest = geopy.Point(5.27, 102.79, alt)
 drawPoint("17:06", dest.latitude, dest.longitude, alt)
@@ -337,17 +334,17 @@ lastTime = time
 time = data["Date"][0]
 deltaT = abs(lastTime-time).total_seconds()
 radius = speed*deltaT
-print(radius, deltaT)
-print(origin.latitude, origin.longitude)
 dest = findShortest("test", radius, origin, alt, circles[0], "North")	
 for i in range(len(data)-1):
 	origin = dest
 	deltaT = abs(data["Date"][i+1]-data["Date"][i]).total_seconds()
 	radius = speed*deltaT
+	print(data["Date"][i].hour)
 	dest = findShortest("test", radius, origin, alt, circles[i+1], "South")
+	drawPoint(str(data["Date"][i].hour)+":"+str(data["Date"][i].minute), dest.latitude, dest.longitude, alt)
 print('\n')
-kml.save("Flight.kml")###########################################################
 
+kml.save("Flight.kml")###########################################################
 #BFO Analysis
 deltaFDown = []
 for i in range(len(data)):
