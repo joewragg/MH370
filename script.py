@@ -18,7 +18,7 @@ from scipy.spatial import distance
 posGES = np.array([-2368.8, 4881.1, -3342.0])
 posAES = np.array([-1293.0, 6238.3, 303.5])
 c = 299792458/1000#km/s 
-iterationConstant = 10000
+iterationConstant = 800
 
 def getData(Time = 3):
 	x = []
@@ -124,7 +124,7 @@ def getData(Time = 3):
 def inputR(inputText, wantedTextList):
 	inp = False
 	while inp == False:
-		string = input(inputText)
+		string = raw_input(inputText)
 		if string in wantedTextList:inp = True
 	return string 
 
@@ -272,55 +272,77 @@ def getFComp(posPl, speed, posSat):
 	deltaFComp = Fup*(((c+vs)/c)-1)
 	return deltaFComp
 
-def findShortest(name, radius, origin, alt, circle):
+def findShortest(name, radius, origin, alt, circle, direction):
 	distArr = []
-	j = []
 	circle = circle.to_lat_lon()
+	lastDist = 99999
 	for i in range(len(circle)):
 		destination = geopy.Point(circle[i][0], circle[i][1], alt)
 		distance = VincentyDistance(origin, destination).meters	
-		if i !=0: lastDist = dist 
-		else: lastDist = 9999999
-		dist = abs(distance-radius)
-		if dist-lastDist<0:print(dist)
-		distArr.append(dist)
-	distArr = np.diff(distArr)
-	distArr = list(np.where(distArr==True))
-	distArr = distArr[0]
-	#print(distArr)
-	for i in range(len(distArr)):
-		if distArr[i]<1800:j.append(i) 
-	distArr = distArr[j]
-	distArr = list(distArr)
-	print(dwda)
-	for i in range(len(distArr)):
-		j = distArr.index(distArr[i])
-		drawLine(name, origin.latitude, origin.longitude, circle[j][0], circle[j][1], simplekml.Color.red)
+		dist = distance-radius
+		print(dist)
+		if (lastDist>0) and (dist<0) and (direction=="North"):
+			minDist = dist
+			j = i
+		if (lastDist<0) and (dist>0) and (direction=="South"):
+			minDist = dist
+			j = i
+		lastDist = dist
+	print(minDist)
+	drawLine(name, origin.latitude, origin.longitude, circle[j][0], circle[j][1], simplekml.Color.red)
 	return geopy.Point(circle[j][0], circle[j][1], alt)
 
-#Get1stArcPosition
-lastTime = datetime(2014,3,7,17,6,43)
-lat = 5.27
-lon = 102.79
-alt = 10668#35kfeet
-deltaT = abs(lastTime-data["Date"][0])
-deltaT = deltaT.total_seconds()
 speed = 243.322
+alt = 10668
+origin = geopy.Point(2.7, 101.7, 0)
+dest = geopy.Point(5.27, 102.79, alt)
+drawPoint("17:06", dest.latitude, dest.longitude, alt)
+drawLine("Path1", origin.latitude, origin.longitude, dest.latitude, dest.longitude, simplekml.Color.red)
+
+origin = dest
+lastTime = datetime(2014,3,7,17,6,43)
+bearing = 25
+time = datetime(2014, 3, 7, 17, 21, 13)
+deltaT = abs(lastTime-time).total_seconds()
 radius = speed*deltaT
-#drawCircle("FirstFlight", lat, lon, radius, simplekml.Color.red)
-origin = geopy.Point(lat, lon, alt)
-#bearing = 25-90#ETN???
-#destination = VincentyDistance(kilometers=radius*1e-3).destination(origin, bearing)
-drawPoint("17:06", origin.latitude, origin.longitude, alt)
-dest = findShortest("test", radius, origin, alt, circles[0])	
+dest = VincentyDistance(kilometers=radius*1e-3).destination(origin, bearing)
+drawPoint("17:21", dest.latitude, dest.longitude, alt)
+drawLine("Path2", origin.latitude, origin.longitude, dest.latitude, dest.longitude, simplekml.Color.red)
+
+origin = dest
+lastTime = time
+time = datetime(2014,3,7,17,52,27)
+deltaT = abs(lastTime-time).total_seconds()
+radius = speed*deltaT
+print(radius)
+dest = geopy.Point(5.2, 100.2, alt)
+drawPoint("17:52", dest.latitude, dest.longitude, alt)
+drawLine("Path3", origin.latitude, origin.longitude, dest.latitude, dest.longitude, simplekml.Color.red)
+
+origin = dest
+lastTime = time
+time = datetime(2014,3,7,18,22,12)
+deltaT = abs(lastTime-time).total_seconds()
+radius = speed*deltaT
+dest = geopy.Point(6.65, 96.34, alt)
+drawPoint("18:22:", dest.latitude, dest.longitude, alt)
+drawLine("Path4", origin.latitude, origin.longitude, dest.latitude, dest.longitude, simplekml.Color.red)
+
+origin = dest
+lastTime = time
+time = data["Date"][0]
+deltaT = abs(lastTime-time).total_seconds()
+radius = speed*deltaT
+dest = findShortest("test", radius, origin, alt, circles[0], "North")	
+
 for i in range(len(data)-1):
 	origin = dest
 	deltaT = abs(data["Date"][i+1]-data["Date"][i]).total_seconds()
 	radius = speed*deltaT
-	dest = findShortest("test", radius, origin, alt, circles[i+1])
+	dest = findShortest("test", radius, origin, alt, circles[i+1], "South")
 print('\n')
+kml.save("Flight.kml")###########################################################
 
-kml.save("Flight.kml")
 
 #BFO Analysis
 deltaFDown = []
