@@ -20,7 +20,7 @@ from sympy import Symbol
 posGES = np.array([-2368.8, 4881.1, -3342.0])
 posAES = np.array([-1293.0, 6238.3, 303.5])
 c = 299792458/1000#km/s 
-iterationConstant = 800
+iterationConstant = 8000
 alt = 10668*1e-3
 
 def getData(Time = 3):
@@ -127,7 +127,7 @@ def getData(Time = 3):
 def inputR(inputText, wantedTextList):
 	inp = False
 	while inp == False:
-		string = input(inputText)
+		string = raw_input(inputText)
 		if string in wantedTextList:inp = True
 	return string 
 
@@ -147,7 +147,11 @@ def getBias(posSat):
 	for i in range(len(data)):
 		if data["Date"][i]==datetime(2014,3,7,16,41,52,907000):#TakeOff
 			meanBiasR = np.mean(biasR)
+			print(meanBiasR)
 			meanBiasT = np.mean(biasT)
+			meanBiasT = -0.495679
+			meanBiasR = meanBiasT
+			print(meanBiasR)
 			#meanBiasR = np.mean(np.append(biasR, biasT))
 		if data["Date"][i]<=datetime(2014,3,7,16,29,52,406000):#preTakeOff
 			if data['ChType'][i]=="R-Channel RX":
@@ -231,7 +235,7 @@ def drawCircle(Name, Lat, Lon, Radius, color):
 	pol = kml.newpolygon(name=Name, outerboundaryis=circle.to_kml())
 	pol.style.polystyle.color ="000000ff"   # Transparent 
 	pol.style.linestyle.color = color
-	pol.altitudemode = 'clampToGround'
+	pol.altitudemode = 'absoluteAltitude'
 	pol.tessellate = 1 
 	return circle
 
@@ -253,7 +257,7 @@ for i in range(len(data)):
 	a = data["Dist"][i]
 	b = np.square(data["x"][i])+np.square(data["y"][i])+np.square(data["z"][i])
 	b = np.sqrt(b)
-	c = b-data["Alt"][i]+alt+73
+	c = 6371+alt#+73
 	#c = 6371+alt+50
 	pheta = np.square(b)+np.square(c)-np.square(a)
 	pheta = pheta / (2*b*c)
@@ -338,22 +342,25 @@ lastTime = time
 time = data["Date"][0]
 deltaT = abs(lastTime-time).total_seconds()
 radius = speed*deltaT
+print(data)
+destArr = []
 dest = findShortest("test", radius, origin, alt, circles[0], "North")	
+destArr.append(dest)
 firstArcPos = dest
 drawPath(origin, dest, time, 5)
 
-for i in range(len(data)-1):
+speed = 257.322
+for i in range(1,6):
 	origin = dest
 	deltaT = abs(data["Date"][i+1]-data["Date"][i]).total_seconds()
 	radius = speed*deltaT
 	print(data["Date"][i].hour)
 	time = data["Date"][i]
 	dest = findShortest("test", radius, origin, alt, circles[i+1], "South")
-	if i==0:secondArcPos = dest
+	destArr.append(dest)
 	drawPath(origin, dest, time, 5+i)
 print('\n')
 
-kml.save("Flight.kml")###########################################################
 #BFO Analysis
 deltaFDown = []
 for i in range(len(data)):
@@ -366,9 +373,15 @@ for i in range(len(data)):
 data["deltaFDown"] = pd.Series(deltaFDown)
 data.deltaFDown = data.deltaFDown.astype(float)
 
+maxAlt = 12192#40kfeet
+glideDist = maxAlt*16.995
+print(glideDist)
+drawCircle("Glide", destArr[5].latitude, destArr[5].longitude, glideDist, simplekml.Color.white) 
+kml.save("Flight.kml")###########################################################
+
 #Arc0
 speed = 243.322
-print(data)
+'''
 for i in range(len(data)):
 	Bias = data["deltaFDown"][i]+deltaSatAFC+deltaFBias
 	Fup = 1646.6525
@@ -383,4 +396,5 @@ for i in range(len(data)):
 	print(vS)
 	v = Symbol('v')
 	print(solve(data["BTO"][i]-(Fup*(((c-vS)/(c-v))-1))-(Fup*(((c+v)/c)-1))-Bias, v))
+'''
 data.to_csv("FinalData.csv")
