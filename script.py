@@ -147,12 +147,11 @@ def getBias(posSat):
 	for i in range(len(data)):
 		if data["Date"][i]==datetime(2014,3,7,16,41,52,907000):#TakeOff
 			meanBiasR = np.mean(biasR)
-			print(meanBiasR)
 			meanBiasT = np.mean(biasT)
 			meanBiasT = -0.495679
-			meanBiasR = meanBiasT
+			meanBiasR=meanBiasT
 			print(meanBiasR)
-			#meanBiasR = np.mean(np.append(biasR, biasT))
+			print(meanBiasT)
 		if data["Date"][i]<=datetime(2014,3,7,16,29,52,406000):#preTakeOff
 			if data['ChType'][i]=="R-Channel RX":
 				bias.append(biasR[biasRn])
@@ -312,7 +311,7 @@ def getDest(origin, lastTime, time, bearing):
 	return dest
 
 alt = alt*1000
-speed = 243.322
+speed = 243.322#cruising Speed
 time = datetime(2014,3,7,17,6,43)
 origin = geopy.Point(2.7, 101.7, 0)
 dest = geopy.Point(5.27, 102.79, alt)
@@ -336,7 +335,7 @@ time = datetime(2014,3,7,18,22,12)
 dest = geopy.Point(6.65, 96.34, alt)
 drawPath(origin, dest, time, 4)
 
-speed = 320
+speed = 320#Max speed
 origin = dest
 lastTime = time
 time = data["Date"][0]
@@ -349,13 +348,14 @@ destArr.append(dest)
 firstArcPos = dest
 drawPath(origin, dest, time, 5)
 
-speed = 257.322
-for i in range(1,6):
+speed = 243.322#cruising Speed
+#speed = 257.322#500knots
+for i in range(0,6):
 	origin = dest
 	deltaT = abs(data["Date"][i+1]-data["Date"][i]).total_seconds()
 	radius = speed*deltaT
-	print(data["Date"][i].hour)
-	time = data["Date"][i]
+	print(data["Date"][i+1].hour)
+	time = data["Date"][i+1]
 	dest = findShortest("test", radius, origin, alt, circles[i+1], "South")
 	destArr.append(dest)
 	drawPath(origin, dest, time, 5+i)
@@ -373,28 +373,12 @@ for i in range(len(data)):
 data["deltaFDown"] = pd.Series(deltaFDown)
 data.deltaFDown = data.deltaFDown.astype(float)
 
-maxAlt = 12192#40kfeet
+maxAlt = 10668#35kfeet
 glideDist = maxAlt*16.995
 print(glideDist)
-drawCircle("Glide", destArr[5].latitude, destArr[5].longitude, glideDist, simplekml.Color.white) 
-kml.save("Flight.kml")###########################################################
+drawCircle("Glide", destArr[6].latitude, destArr[6].longitude, glideDist, simplekml.Color.white) 
+drawPoint("Their location", -35.6, 92.8, 0)
 
+kml.save("Flight.kml")
 #Arc0
-speed = 243.322
-'''
-for i in range(len(data)):
-	Bias = data["deltaFDown"][i]+deltaSatAFC+deltaFBias
-	Fup = 1646.6525
-	v = np.array([data["vx"][i], data["vy"][i], data["vz"][i]], dtype=float)
-	sat = np.array([data["x"][i], data["y"][i], data["z"][i]], dtype=float)
-	origin = firstArcPos
-	origin = lla_to_ecef(origin.latitude, origin.longitude, alt)
-	origin = np.asarray(origin)
-	origin = origin/1000
-	s = sat - origin
-	vS = np.dot(v, s)/np.linalg.norm(s)
-	print(vS)
-	v = Symbol('v')
-	print(solve(data["BTO"][i]-(Fup*(((c-vS)/(c-v))-1))-(Fup*(((c+v)/c)-1))-Bias, v))
-'''
 data.to_csv("FinalData.csv")
