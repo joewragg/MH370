@@ -1,0 +1,923 @@
+
+
+
+
+
+
+
+
+
+
+Abstract
+========
+
+Malaysia Airlines Flight 370 (MH370) was a scheduled international
+passenger flight that disappeared on the 8 of March 2014 while flying
+from Kuala Lumpur Airport, to Beijing. The aircraft has not been
+recovered, and the cause of the disappearance remains unknown.
+
+Introduction
+============
+
+Malaysia Airlines Flight 370 (MH370) was a scheduled international
+passenger flight that disappeared on the 8 of March 2014 while flying
+from Kuala Lumpur International Airport to Beijing Capital International
+Airport in China. The aircraft has not been recovered, and the cause of
+the disappearance remains unknown. It remains the most expensive search
+and became the biggest mystery in aviation history
+
+Analysis of satellite communications between the aircraft and Inmarsat’s
+satellite communications network concluded that the flight continued
+until at least 08:19 and flew south into the southern Indian Ocean,
+although the precise location cannot be determined. From October 2014 to
+January 2017, a comprehensive survey of 120,000 km (46,000 sq mi) of sea
+floor south-west of Perth, Western Australia, yielded no evidence of the
+aircraft. In January 2018, a second search has been announced to be
+conducted by a searching vessel provided by private U.S. marine company
+Ocean Infinity.
+
+In a previous search attempt, Malaysia had established a Joint
+Investigation Team to investigate the incident, working with foreign
+aviation authorities and experts. Malaysia released a final report on
+Flight 370 in October 2017.
+
+The analysis of communications between the flight and Inmarsat’s
+satellite telecommunication network provide the only source of
+information about the flight’s location and possible in-flight events
+after it disappeared from radar coverage at 2:22am.
+
+The main objective of our investigation was to replicate inmarsat’s
+analasis of the satelite communications and attempt to make our own
+conclusions. To see if they agree with the established findings given in
+the report published in october 2017.
+
+Method
+======
+
+Initial Path
+------------
+
+Our first task was to attempt to find information about the plane’s
+whereabouts before its dissaperrance from miliatry radar. From there we
+have a starting point to then analyse the satelite data. Here is what
+know from the report:
+
+-   Malaysia Airlines Flight 370 departed Kuala Lumpur International
+    Airport at 16:41 UTC on the 7th March 2014.
+-   The final automatically transmitted position (ACARS) from the
+    aircraft occurred at 17:07
+-   No radio communications were received from the crew after 17:19
+-   ACARS reports from the flight, giving heading and speed, were
+    expected at 17:37 and 18:07 but were never received.
+-   At 17:21, the aircraft disappeared from the radar of air traffic
+    control in the South China Sea between Malaysia and Vietnam.
+-   The aircraft continued to be tracked by Malaysian military radar
+-   At 1725 the aircraft deviated from the flight-planned route turning
+    around and crossing the Malay Peninsula.
+-   Flight 370 left the range of Malaysian military radar at 18:22 and
+    was last located 370 km northwest of Penang.
+
+Here is the path predicted in the ATSB “Underwater search areas” report:
+Unfortunately little information is given in the report. The table below
+shows what information is given in the report and what is needed to be
+calculated.
+
+Once we plotted this in google earth you can see the result in the image
+below:
+
+BTO Analysis
+------------
+
+The analysis of communications between the flight and Inmarsat’s
+satellite telecommunication network provide the only source of
+information about Flight 370’s location and possible in-flight events
+after it disappeared from radar coverage at 2:22am.
+An equation can therefore be constructed using an average distance where
+*D**i**s**t**a**n**c**e* = *S**p**e**e**d* × *T**i**m**e*:
+$$Range(SATToAircraft) = \\frac{c.(BTO-Bias)}{2} - Range(SatToGES)$$
+ *B**i**a**s* is the SDU bias and is constant for the flight and so can
+be calculated using the first half an hour of flight before takeoff.
+Where the aircraft’s location is fixed. *c* is the speed of light.
+$$Bias = BTO-\\frac{2\[Range(SatToAircraft)-Range(SatToGES)\]}{c}$$
+ We calculated a mean bias of -0.4950348991s, the bias ATSB uses (given
+in the report is -0.495679s. See appendix figure
+
+We are provided with a table of times and BTO values. See appendix
+figure . We can use these values to generate a list of
+*R**a**n**g**e*(*S**a**t**T**o**A**i**r**c**r**a**f**t*) values and
+times. To solve this we need a table of times and satelite positions see
+computational details. Once we have these we can then work out the
+distance between the satelite and the GES which is in a constant
+position giving *R**a**n**g**e*(*S**a**t**T**o**G**E**S*).
+$$Range(SatToGES) = \\sqrt{(x\_{Sat}-x\_{GES})^2+(y\_{Sat}-y\_{GES})^2+(z\_{Sat}-z\_{GES})^2}$$
+
+Then finally use the first equation and both these tables to generate a
+table of range values, the dist column, one for each of the seven
+handshakes:
+
+<table>
+<caption>Seven handshake data, some columns excluded to fit</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">DateSat</th>
+<th style="text-align: right;">x</th>
+<th style="text-align: right;">vx</th>
+<th style="text-align: right;">Dist</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">2014-03-07 18:25:27.421</td>
+<td style="text-align: left;">2014-03-07 18:25:27.400</td>
+<td style="text-align: right;">18136.79</td>
+<td style="text-align: right;">0.0018860</td>
+<td style="text-align: right;">36905.35</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2014-03-07 19:41:02.906</td>
+<td style="text-align: left;">2014-03-07 19:41:02.900</td>
+<td style="text-align: right;">18145.32</td>
+<td style="text-align: right;">0.0019099</td>
+<td style="text-align: right;">36745.42</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2014-03-07 20:41:04.904</td>
+<td style="text-align: left;">2014-03-07 20:41:04.900</td>
+<td style="text-align: right;">18152.42</td>
+<td style="text-align: right;">0.0020370</td>
+<td style="text-align: right;">36785.74</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2014-03-07 21:41:26.905</td>
+<td style="text-align: left;">2014-03-07 21:41:26.900</td>
+<td style="text-align: right;">18160.03</td>
+<td style="text-align: right;">0.0021580</td>
+<td style="text-align: right;">36954.46</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2014-03-07 22:41:21.906</td>
+<td style="text-align: left;">2014-03-07 22:41:21.900</td>
+<td style="text-align: right;">18167.82</td>
+<td style="text-align: right;">0.0021375</td>
+<td style="text-align: right;">37238.41</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2014-03-08 00:10:59.928</td>
+<td style="text-align: left;">2014-03-08 00:10:59.900</td>
+<td style="text-align: right;">18178.16</td>
+<td style="text-align: right;">0.0015841</td>
+<td style="text-align: right;">37803.64</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2014-03-08 00:19:29.416</td>
+<td style="text-align: left;">2014-03-08 00:19:29.400</td>
+<td style="text-align: right;">18178.94</td>
+<td style="text-align: right;">0.0014917</td>
+<td style="text-align: right;">37861.91</td>
+</tr>
+</tbody>
+</table>
+
+Appendix figure shows an example from ATSB of how this should look for
+the first half an hour of flight.
+
+Taking a row of the table giving you a time, position of the satelite
+and the range you can draw a great circle on the earth:
+Repeating this for the seven handhshakes gives you seven arcs:
+
+BFO Analysis
+------------
+
+An analysis of the burst frequency offset (BFO) values provided by
+inmarsat (see appendix fig’ ) can determine where along the BTO arcs the
+aircraft was located. The burst frequency offset is defined as the
+difference between the expected and received frequency of transmissions
+caused by doppler shifts.
+-   *δ**f*<sub>*A**F**C*</sub> + *δ**f*<sub>*s**a**t*</sub> are provided
+    by ATSB see appendix figure
+-   *δ**f*<sub>*b**i**a**s*</sub> is provided as 152.5*H*<sub>*z*</sub>
+    see appendix figure
+-   This leaves *δ**f*<sub>*d**o**w**n*</sub>, *δ**f*<sub>*u**p*</sub>
+    and *δ**f*<sub>*c**o**m**p*</sub> to be calculated
+
+### *Δ**F*<sub>*d**o**w**n*</sub> calculation
+
+Using a basic doppler shift formula with a stationary observer (GES) and
+a source moving towards the observer. This direction is arbitary and
+affects the sign on the bottom of the equation.
+$$\\Delta F\_{down} = f\_{down} (\\frac{c}{c-v\_s} -1)$$
+
+-   where *v*<sub>*s*</sub> is the velocity of the satelite towards the
+    GES
+-   where c is the speed of light
+-   *f*<sub>*d**o**w**n*</sub> is a constant provided by ATSB and is the
+    frequency before shift of the downlink signal
+    *f*<sub>*d**o**w**n*</sub> = 3615.1525*M**H*<sub>*z*</sub>
+
+We have the velocity of the satelite as an xyz vector earth fixed
+geomertry. To turn this into velocity towards GES we use the vector
+projection in the direction of GES
+$$\\textbf{v}\_s = \\frac{\\textbf{v}\\cdot \\textbf{s}}{|s|}$$
+### *Δ**F*<sub>*u**p*</sub> calculation
+
+Using a basic doppler shift formula with a moving observer (MH370) and
+source. Both moving towards each other.
+$$\\Delta F\_{up} = f\_{up} (\\frac{c+v\_{s}}{c-v\_{pl}} -1)$$
+
+-   where *v*<sub>*s*</sub> is the velocity of the satelite towards the
+    plane
+-   where c is the speed of light
+-   *f*<sub>*u**p*</sub> is a constant provided by ATSB and is the
+    frequency before shift of the uplink signal
+    *f*<sub>*u**p*</sub> = 1646.6525*M**H*<sub>*z*</sub>
+
+Again we have the velocity of the satelite as an xyz vector earth fixed
+geomertry. To turn this into velocity towards the plane we use the
+vector projection in the direction of the plane.
+$$\\textbf{v}\_s = \\frac{\\textbf{v}\\cdot \\textbf{s}}{|s|}$$
+### *δ**f*<sub>*c**o**m**p*</sub> calculation
+
+*δ**f*<sub>*c**o**m**p*</sub> is defined as the frequency compensation
+applied by the aircraft, to attempt to compensate for the doppler
+shifts. This assumes that the satelite is in a fixed position above the
+equater at its nominal position. However due to the satelite drift at
+the time the delta f comp could not fully compensate for the doppler
+shift which is why we see a *δ**f**u**p* value.
+
+The nominal position is stated in the report as a longitude of
+64.5**<sup>∘</sup>. Above the equater therefore a latitude of
+0**<sup>∘</sup>. There is no nominal value for the altitude given so we
+would have to assume a value for this. One method could be to assume an
+average value of the altitude over time.
+
+It is also not stated in the report how this calculation is done by the
+aircraft’s onboard computer. However you could assume it uses a standard
+doppler shift formula assuming a stationary observer (satelite):
+
+$$\\delta f\_{comp} = f\_{up} (\\frac{c}{c-v\_{pl}})$$
+
+*B**F**O* = *Δ**F*<sub>*u**p*</sub> + *Δ**F*<sub>*d**o**w**n*</sub> + *δ**f*<sub>*c**o**m**p*</sub> + (*δ**f*<sub>*A**F**C*</sub> +  + *δ**f*<sub>*s**a**t*</sub>) + *δ**f*<sub>*b**i**a**s*</sub>
+
+$$BFO = f\_{up} (\\frac{c+v\_{s}}{c-v\_{pl}} -1) + f\_{down} (\\frac{c}{c-v\_s} -1) + f\_{up} (\\frac{c}{c-v\_{pl}}) + const $$
+ where
+*c**o**n**s**t* = *δ**f*<sub>*A**F**C*</sub> + *δ**f*<sub>*s**a**t*</sub> + *δ**f*<sub>*b**i**a**s*</sub>
+; *v*<sub>*s*</sub> = |**v**<sub>*s*</sub>| and
+$\\textbf{v}\_s = \\frac{\\textbf{v}\\cdot \\textbf{s}}{|s|}$
+
+As you can see you have two unknowns the velocity of the plane and its
+position. So the only way to solve this would be to use a monte carlo or
+numerical method. Finding the most probable positions and velocities
+using a probabilistic analaysis along each arc for each arc.
+
+Finding a suitable path for the plane
+-------------------------------------
+
+We know that the plane must cross the first arc at 18:25, we also know
+that it’s last known position from our initial path is the last radar
+contact at 18:22.
+Now we needed to find a path between each arc. Starting with the point
+at 18:25. With an incomplete BFO analysis you have to make some
+reasonable assumptions about the flight path:
+
+-   Constant speed of 450 knots
+-   Constant altitude of 35,000 feet
+-   The plane always travels in straight lines between each arc
+
+This gives you two possible routes the plane could have taken, one
+taking a northern trajectory and another taking a southern trajectory:
+Defining a search area
+----------------------
+
+Now we know the plane must take a southern trajectory the last point of
+this on the seventh arc marks the last known position of the plane.
+
+As the plane crosses the seventh arc at 19:29 the handshake is an
+unscheduled log on request from the plane. This could mean a loss of
+fuel at this point as the emergency power systems would have rebooted
+and tried to contact the satelite network. It takes ~ 2 minutes for the
+SDU and ADU onboard computers to reboot after a power failure so fuel
+loss is expected to be about 2 mins before the failed handshake, so
+about 19:27. This time is also consistent with the flights fuel
+capabilities knowing its amount of fuel from the last acars at 17:06 and
+the time of flight REFERENCE.
+
+So you can take the bearing between the last path and the 7th arc
+position. Then go back two minutes in time giving you a distance
+assuming a constant speed. This gives you a point slightly north east of
+the 7th arc position. As the point of fuel loss (0:17).
+
+The plane can only go so far from here. The circle shows the maximum
+distance before hitting the ocean. This is calculated by an efficient
+glide ratio for a 777 of 17:1. Meaning the plane can glide horizontally
+about 17 times its altitude. i.e.
+*r**a**d**i**u**s* = *g**l**i**d**e**d**i**s**t* = 17 × 35, 000*f**e**e**t* = 181*k**m*.
+The assumption that the plane glides is also consistent with some of the
+wreckage found showing large intact pieces left REFERENCE.
+
+Knowing the plane keeps a consistent bearing from the 6th arc, throught
+the fuel loss point to the 7th arc. It is a resonable assumption that it
+stays true to this after the 7th arc. Following the yellow radial line.
+Gliding to near the maximum distance at this bearing you can give a
+final point for the crash site, where the yellow line intersects the
+circle.
+
+Computational Details
+---------------------
+
+### Satelite data
+
+For our BTO analysis we needed accurate satelite data for the position
+of the satelite over time. Unfortunatley little information is given
+online or in the report about the satlite position.
+
+We decided to use a simulation of the satelite. To predict its drift
+over time given the initial conditions. We used intitial conditions
+given in the ATSB report. See appendix figure . For time 16:30:00 we
+have a position in earth fixed coordinates xyz and velocity x’y’z’.
+
+We used NASA’s open source general mission analysis tool (GMAT) to model
+the satelite’s trajectory. This gives us satelite data accurate to the
+1/10 of a second. Which is important as the satelite drifts
+substantially throughout the flight.
+
+We then set the program to give us a report file containing all the
+neccessary information:
+
+The goal of this project is to take the input data and convert it into a
+final path for the plane. Not only that but I wanted the code to run all
+in one automatic script so changes could be made to the satelite data or
+inmarsat data and the code would be able to run again from scratch. I
+also wanted a nice way of visualising this so I used google earth’s kml
+library.
+
+Python seemed like an appropriate choice for programming language it
+also had all of the libraries I would need. Such as the pandas library
+whcih is used for parsing all of the data given by inmarsat see appendix
+figure and the gmat report file into a useable table for calculations.
+It was a major challenge to parse them into two usable tables. Then I
+had to match the time given in the inmarsat data to a relevant time in
+the satelite report file. All of this is done in the getData function
+see appendix
+
+Once we have this condensed into one table, you end up with a table with
+about 500 rows. The bias is then calculated for the first half an hour
+see . However we ended up using ATSB’s bias value so this function is
+now void. The data is then further condensed into a table of seven arcs
+giving us figure . See appendix .
+
+I made various functions for plotting lines, points and circles in
+google earth. All of which is saved in a kml file which can be opened in
+google earth to show a visual representation of the data. I also used
+the simplekml library. See appendix
+
+The next task is drawing the arcs, intitial and final paths. See
+appendix to . An attempt is made at the BFO analysis giving us
+deltaFComp and deltaFDown in appendix . Finally the glide ratio is
+calculated and a final path estimated saving to the kml file. See .
+
+Results and Discussion
+======================
+
+<table>
+<caption>Summary table of results</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Arc</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: right;">BTO</th>
+<th style="text-align: right;">BFO</th>
+<th style="text-align: right;">bias</th>
+<th style="text-align: right;">Dist</th>
+<th style="text-align: right;">deltaSatAFC</th>
+<th style="text-align: right;">deltaFBias</th>
+<th style="text-align: right;">deltaFDown</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">2014-03-07 18:25:27.421</td>
+<td style="text-align: right;">12520</td>
+<td style="text-align: right;">142</td>
+<td style="text-align: right;">-0.495679</td>
+<td style="text-align: right;">36905.35</td>
+<td style="text-align: right;">10.8</td>
+<td style="text-align: right;">152.5</td>
+<td style="text-align: right;">-1737.185086</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">2014-03-07 19:41:02.906</td>
+<td style="text-align: right;">11500</td>
+<td style="text-align: right;">111</td>
+<td style="text-align: right;">-0.495679</td>
+<td style="text-align: right;">36745.42</td>
+<td style="text-align: right;">-1.2</td>
+<td style="text-align: right;">152.5</td>
+<td style="text-align: right;">-5.711436</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">2014-03-07 20:41:04.904</td>
+<td style="text-align: right;">11740</td>
+<td style="text-align: right;">141</td>
+<td style="text-align: right;">-0.495679</td>
+<td style="text-align: right;">36785.74</td>
+<td style="text-align: right;">-1.3</td>
+<td style="text-align: right;">152.5</td>
+<td style="text-align: right;">1361.827263</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">2014-03-07 21:41:26.905</td>
+<td style="text-align: right;">12780</td>
+<td style="text-align: right;">168</td>
+<td style="text-align: right;">-0.495679</td>
+<td style="text-align: right;">36954.46</td>
+<td style="text-align: right;">-17.9</td>
+<td style="text-align: right;">152.5</td>
+<td style="text-align: right;">2623.988131</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">2014-03-07 22:41:21.906</td>
+<td style="text-align: right;">14540</td>
+<td style="text-align: right;">204</td>
+<td style="text-align: right;">-0.495679</td>
+<td style="text-align: right;">37238.41</td>
+<td style="text-align: right;">-28.5</td>
+<td style="text-align: right;">152.5</td>
+<td style="text-align: right;">3680.905844</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">2014-03-08 00:10:59.928</td>
+<td style="text-align: right;">18040</td>
+<td style="text-align: right;">252</td>
+<td style="text-align: right;">-0.495679</td>
+<td style="text-align: right;">37803.64</td>
+<td style="text-align: right;">-37.7</td>
+<td style="text-align: right;">152.5</td>
+<td style="text-align: right;">4760.278758</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: left;">2014-03-08 00:19:29.416</td>
+<td style="text-align: right;">18400</td>
+<td style="text-align: right;">182</td>
+<td style="text-align: right;">-0.495679</td>
+<td style="text-align: right;">37861.91</td>
+<td style="text-align: right;">-38.0</td>
+<td style="text-align: right;">152.5</td>
+<td style="text-align: right;">4826.809098</td>
+</tr>
+</tbody>
+</table>
+
+Here is a summary of the output of the python code represented as a
+table. With a few columns excluded for the results section. You can find
+the full data outputted from the code in appendix .
+
+Discussion
+----------
+
+-   Compare your results with those expected/predicted by theory.
+-   Provide reasoned explanation for your results.
+-   Compare your results with known results from the literature, if
+    appropriate.
+-   Give suggestions for further work, where appropriate
+
+Conclusions
+===========
+
+Conclude with a brief sum mary of main findings, and their potential
+significance•
+
+References
+==========
+
+-   Use a consistent style – either alphabetic or numeric – to list the
+    references cited.
+-   In the case of numeric, references should be numbered in the order
+    in which they appear in the text.
+
+Appendix python code
+====================
+
+Prelude
+-------
+
+    import numpy as np
+    import simplekml
+    from polycircles import polycircles as pc
+    import math
+    import time
+    import pandas as pd
+    pd.set_option("display.max_rows",999)
+    pd.set_option('display.width', 1000)
+    from datetime import datetime, timedelta
+    import geopy
+    from geopy.distance import VincentyDistance
+    from scipy.spatial import distance
+    from sympy.solvers import solve
+    from sympy import Symbol
+    #Constants
+    posGES = np.array([-2368.8, 4881.1, -3342.0])
+    posAES = np.array([-1293.0, 6238.3, 303.5])
+    c = 299792458/1000#km/s 
+    iterationConstant = 8000
+    alt = 10668*1e-3
+
+Parse data function
+-------------------
+
+    #function to parse data from satelite report file and inmarsat csv file
+    def getData(Time = 3):
+        x,y,z,vx,vy,vz,lat,lon,dateSat,alt = ([] for i in range(10))
+        #Grab InmarSat Data
+        data = pd.read_csv("inmarsat.csv", usecols=[0,8,25,27])
+        data.rename(columns={'Time':'Date', 'Frequency Offset (Hz)': 'BFO', 'Burst Timing Offset (microseconds)': 'BTO', 'Channel Type': 'ChType'}, inplace=True)
+        data['Date'] = pd.to_datetime(data['Date'], format='%d/%m/%Y %H:%M:%S.%f')
+        #Grab report data
+        Report = open("Report.txt", "r")
+        lines = Report.readlines()
+        #Grab report data
+        for i, line in enumerate(lines):
+            #if i <=1:
+            if "Nov" in line:
+                print(line)
+                lines.pop(i)
+            if i!=0:
+                dateSat.append(datetime.strptime(line.split("  ")[0], "%d %b %Y %H:%M:%S.%f"))
+                x.append(line.split()[4])
+                y.append(line.split()[5])
+                z.append(line.split()[6])
+                vx.append(line.split()[7])
+                vy.append(line.split()[8])
+                vz.append(line.split()[9])
+                lat.append(line.split()[10])
+                lon.append(line.split()[11])
+                alt.append(line.split()[12])
+        dateSatd = []
+        xd = []
+        yd = []
+        zd = []
+        vxd = []
+        vyd = []
+        vzd = []
+        lond = []
+        latd = []
+        altd = []
+        data = data[pd.notnull(data['BTO'])]
+        data = data.reset_index(drop=True)
+        data = data[pd.notnull(data['BTO'])]
+        data = data.reset_index(drop=True)
+        for i in range(len(data)):
+            for j in range(len(dateSat)):
+                if abs(dateSat[j]-data['Date'][i])<=timedelta(0,0,0,50):
+                    dateSatd.append(dateSat[j])
+                    xd.append(x[j])
+                    yd.append(y[j])
+                    zd.append(z[j])
+                    vxd.append(vx[j])
+                    vyd.append(vy[j])
+                    vzd.append(vz[j])
+                    latd.append(lat[j])
+                    lond.append(lon[j])
+                    altd.append(alt[j])
+                    del dateSat[:j] 
+                    del x[:j]
+                    del y[:j]
+                    del z[:j]
+                    del vx[:j]
+                    del vy[:j]
+                    del vz[:j]
+                    del lat[:j]
+                    del lon[:j]
+                    del alt[:j]
+                    break
+        data["DateSat"] = pd.Series(dateSatd)
+        data["x"] = pd.Series(xd)
+        data["y"] = pd.Series(yd)
+        data["z"] = pd.Series(zd)
+        data["vx"] = pd.Series(vxd)
+        data["vy"] = pd.Series(vyd)
+        data["vz"] = pd.Series(vzd)
+        data["Lat"] = pd.Series(latd)
+        data["Lon"] = pd.Series(lond)
+        data["Alt"] = pd.Series(altd)
+        data = data[['Date', 'DateSat', 'x', 'y', 'z', 'vx', 'vy', 'vz', 'Lat', 'Lon', 'Alt', 'ChType', 'BTO', 'BFO']]#rearrange columns
+        data.x = data.x.astype(float)
+        data.y = data.y.astype(float)
+        data.z = data.z.astype(float)
+        data.vx = data.vx.astype(float)
+        data.vy = data.vy.astype(float)
+        data.vz = data.vz.astype(float)
+        data.Lon = data.Lon.astype(float)
+        data.Lat = data.Lat.astype(float)
+        data.Alt = data.Alt.astype(float)
+        data.BTO = data.BTO.astype(float)
+        data.BFO = data.BFO.astype(float)
+        return data
+
+Miscellaneous functions
+-----------------------
+
+    #recursive asks for use input
+    def inputR(inputText, wantedTextList):
+        inp = False
+        while inp == False:
+            string = input(inputText)
+            if string in wantedTextList:inp = True
+        return string 
+    # returns bias given data
+    def getBias(posSat):
+        distSatGES = np.linalg.norm(posSat-posGES, axis = 1)
+        distSatAES = np.linalg.norm(posSat-posAES, axis = 1)
+        biasR = []
+        biasT = []
+        for i in range(len(data)):
+            if data['ChType'][i]=="R-Channel RX":
+                biasR.append((data['BTO'][i]*1e-6) - 2*(distSatAES[i]+distSatGES[i])/c )
+            if data['ChType'][i]=="T-Channel RX":
+                biasT.append((data['BTO'][i]*1e-6) - 2*(distSatAES[i]+distSatGES[i])/c )
+        bias = []
+        biasRn = 0
+        biasTn = 0
+        for i in range(len(data)):
+            if data["Date"][i]==datetime(2014,3,7,16,41,52,907000):#TakeOff
+                meanBiasR = np.mean(biasR)
+                meanBiasT = np.mean(biasT)
+                meanBiasT = -0.495679
+                meanBiasR=meanBiasT
+                print("The bias used is: ", meanBiasT, "s")
+            if data["Date"][i]<=datetime(2014,3,7,16,29,52,406000):#preTakeOff
+                if data['ChType'][i]=="R-Channel RX":
+                    bias.append(biasR[biasRn])
+                    biasRn = biasRn+1
+                elif data['ChType'][i]=="T-Channel RX":
+                    bias.append(biasT[biasTn])
+                    biasTn = biasTn+1
+            else:#postTakeOff   
+                if data['ChType'][i]=="R-Channel RX": bias.append(meanBiasR)
+                elif data['ChType'][i]=="T-Channel RX": bias.append(meanBiasT)
+        bias = pd.Series(bias)
+        return bias, distSatGES
+    #gives indexes for data matching the arc dates 
+    def getArcDates():
+        arcDate = []
+        arcIndexes = []             
+        arcDate.append(datetime(2014,3,7,18,25,27))
+        arcDate.append(datetime(2014,3,7,19,41,00))
+        arcDate.append(datetime(2014,3,7,20,41,00))
+        arcDate.append(datetime(2014,3,7,21,41,24))
+        arcDate.append(datetime(2014,3,7,22,41,19))
+        arcDate.append(datetime(2014,3,8,0,10,58))
+        arcDate.append(datetime(2014,3,8,0,19,29))
+        for i in range(len(arcDate)):
+            for j in range(len(data)):
+                if abs(data["Date"][j]-arcDate[i])<=timedelta(0,5):
+                    arcIndexes.append(j)    
+        return arcIndexes
+    #converts latitude and longitude to earth centered earth fixed coordinates
+    def lla_to_ecef(lat, lon, alt):
+        import pyproj
+        ecef = pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84')
+        lla = pyproj.Proj(proj='latlong', ellps='WGS84', datum='WGS84')
+        x, y, z = pyproj.transform(lla, ecef, lon, lat, alt, radians=False)
+        return x, y, z
+    #converts ecef to lat lon coords
+    def ecef_to_lla(x, y, z):
+        import pyproj
+        ecef = pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84')
+        lla = pyproj.Proj(proj='latlong', ellps='WGS84', datum='WGS84')
+        lon, lat, alt = pyproj.transform(ecef, lla, x, y, z, radians=False)
+        return lat, lon, alt
+
+    #Main code start
+    pd.options.mode.chained_assignment = None
+    print("getting data...")
+
+    ## getting data...
+
+    data = getData()
+    print("done")
+
+    ## done
+
+    arcDates = getArcDates()
+    data["BTO"][arcDates[0]] = data.iloc[arcDates[0]].loc["BTO"]-4600
+    data["BTO"][arcDates[6]] = data.iloc[arcDates[6]].loc["BTO"]-4600
+    data.to_csv("Data.csv")
+    data = pd.read_csv("Data.csv")
+    data = data.drop(['Unnamed: 0'], axis=1)
+    data['Date'] = pd.to_datetime(data['Date'], format='%Y-%m-%d %H:%M:%S.%f')
+    data['DateSat'] = pd.to_datetime(data['DateSat'], format='%Y-%m-%d %H:%M:%S.%f')
+    arcDates = getArcDates()
+    #Some more data assignment
+    data["bias"], distSatGES = getBias(data.as_matrix(['x','y','z']))
+
+    ## The bias used is:  -0.495679 s
+
+    data["Dist"] = (0.5*c*((data["BTO"].values*1e-6)-data["bias"].values)) - distSatGES 
+    deltaSatAFC = np.zeros(len(data))
+    deltaFBias = np.full(len(data), 152.5)
+    data["deltaSatAFC"] = pd.Series(np.asarray(deltaSatAFC))
+    data["deltaFBias"] = pd.Series(np.asarray(deltaFBias))
+    data.deltaSatAFC = data.deltaSatAFC.astype(float)
+    data.deltaFBias = data.deltaFBias.astype(float)
+    data["deltaSatAFC"][arcDates[0]] = 10.8
+    data["deltaSatAFC"][arcDates[1]] = -1.2
+    data["deltaSatAFC"][arcDates[2]] = -1.3
+    data["deltaSatAFC"][arcDates[3]] = -17.9
+    data["deltaSatAFC"][arcDates[4]] = -28.5
+    data["deltaSatAFC"][arcDates[5]] = -37.7
+    data["deltaSatAFC"][arcDates[6]] = -38.0
+    data = data[data.deltaSatAFC != 0]
+    data = data.reset_index(drop=True)
+
+Google earth kml functions
+--------------------------
+
+    def drawPoint(Name, Lat, Lon, Alt):
+        pnt = kml.newpoint(name= Name)
+        pnt.coords = [(Lon, Lat, Alt)]
+        pnt.altitudemode = 'relativeToGround'
+        return 1
+    def drawCircle(Name, Lat, Lon, Radius, color):
+        circle = pc.Polycircle(latitude=Lat, longitude=Lon, radius=Radius, number_of_vertices=iterationConstant)
+        pol = kml.newpolygon(name=Name, outerboundaryis=circle.to_kml())
+        pol.style.polystyle.color ="000000ff"   # Transparent 
+        pol.style.linestyle.color = color
+        pol.altitudemode = 'absoluteAltitude'
+        pol.tessellate = 1 
+        return circle
+    def drawLine(Name, originLat, originLon, destLat, destLon, color):
+        ls = kml.newlinestring(name = Name)
+        ls.style.linestyle.color = color
+        ls.coords = [(originLon, originLat), (destLon, destLat)]
+        return 1
+
+Drawing the arcs
+----------------
+
+    kml = simplekml.Kml()
+    drawPoint("Satposition", np.mean(data["Lat"].values), np.mean(data["Lon"].values),357860)
+    arcIndexes = arcDates
+    arcNo = 0
+    circles = []
+    #draw arcs
+    for i in range(len(data)):
+        arcNo = arcNo+1
+        a = data["Dist"][i]
+        b = np.square(data["x"][i])+np.square(data["y"][i])+np.square(data["z"][i])
+        b = np.sqrt(b)
+        c = 6371+alt#+73
+        #c = 6371+alt+50
+        pheta = np.square(b)+np.square(c)-np.square(a)
+        pheta = pheta / (2*b*c)
+        pheta = np.arccos(pheta)
+        radius = c*pheta
+        datetime(2014,3,7,16,29,52,406000)
+        radius = radius*1000
+        circles.append(drawCircle("Arc"+str(arcNo), data["Lat"][i], data["Lon"][i], radius, simplekml.Color.white))
+
+Drawing the intitial path
+-------------------------
+
+    #find path between arcs given a direction north or south  
+    def findShortest(name, radius, origin, alt, circle, direction):
+        distArr = []
+        circle = circle.to_lat_lon()
+        lastDist = 99999
+        for i in range(len(circle)):
+            destination = geopy.Point(circle[i][0], circle[i][1], alt)
+            distance = VincentyDistance(origin, destination).meters 
+            dist = distance-radius
+            if (lastDist>0) and (dist<0) and (direction=="North"):
+                minDist = dist
+                j = i
+            if (lastDist<0) and (dist>0) and (direction=="South"):
+                minDist = dist
+                j = i
+            lastDist = dist
+        return geopy.Point(circle[j][0], circle[j][1], alt)
+    def drawPath(origin, dest, time, no):
+        if time.minute<10:
+            drawPoint(str(time.hour)+":0"+str(time.minute), dest.latitude, dest.longitude, alt)
+        else:
+            drawPoint(str(time.hour)+":"+str(time.minute), dest.latitude, dest.longitude, alt)
+        drawLine("Path"+str(no), origin.latitude, origin.longitude, dest.latitude, dest.longitude, simplekml.Color.red)
+        return 1 
+    #get destination given origin times and breaing
+    def getDest(origin, lastTime, time, bearing, radius):
+        dest = VincentyDistance(kilometers=radius*1e-3).destination(origin, bearing)
+        return dest
+    alt = alt*1000
+    speed = 231.5#450knots
+    time = datetime(2014,3,7,17,6,43)
+    origin = geopy.Point(2.7, 101.7, 0)
+    dest = geopy.Point(5.27, 102.79, alt)
+    drawPath(origin, dest, time, 1) 
+    origin = dest
+    lastTime = time
+    time = datetime(2014, 3, 7, 17, 21, 13)
+    deltaT = abs(lastTime-time).total_seconds()
+    radius = speed*deltaT
+    dest = getDest(origin, lastTime, time, 25, radius)
+    drawPath(origin, dest, time, 2)
+    origin = dest
+    lastTime = time
+    time = datetime(2014,3,7,17,52,27)
+    dest = geopy.Point(5.2, 100.2, alt)
+    drawPath(origin, dest, time, 3)
+    origin = dest
+    lastTime = time
+    time = datetime(2014,3,7,18,22,12)
+    dest = geopy.Point(6.65, 96.34, alt)
+    drawPath(origin, dest, time, 4)
+    speed = 320#Max speed
+    origin = dest
+    lastTime = time
+    time = data["Date"][0]
+    deltaT = abs(lastTime-time).total_seconds()
+    radius = speed*deltaT
+    destArr = []
+    dest = findShortest("test", radius, origin, alt, circles[0], "North")   
+    destArr.append(dest)
+    firstArcPos = dest
+    drawPath(origin, dest, time, 5)
+
+Drawing paths between the arcs
+------------------------------
+
+    speed = 231.5#450knots
+    #draw paths
+    for i in range(0,6):
+        origin = dest
+        deltaT = abs(data["Date"][i+1]-data["Date"][i]).total_seconds()
+        radius = speed*deltaT
+        time = data["Date"][i+1]
+        dest = findShortest("test", radius, origin, alt, circles[i+1], "South")
+        destArr.append(dest)
+        drawPath(origin, dest, time, 5+i)
+        #drawCircle('test', origin.latitude, origin.longitude, radius, simplekml.Color.green)
+        #draw green circle for example
+    origin = dest
+    lastTime = time
+    time = lastTime-timedelta(0,120) 
+    deltaT = abs(lastTime-time).total_seconds()
+    radius = speed*deltaT
+    dest = getDest(origin, lastTime, time, 7.70, radius)
+    drawPath(origin, dest, time, 11)
+
+BFO analysis attempt
+--------------------
+
+    #give a table of delta F comps
+    def getFComp(posPl, speed, posSat):
+        v = v/1000
+        #sat = [0,64.5,35786*1e3]
+        #sat = lla_to_ecef(sat[0], sat[1], sat[2])
+        #sat = np.array(sat)*1e-3
+        s = posSat-posPl
+        vs = np.dot(v,s)
+        vs = vs/np.linalg.norm(s)
+        Fup = 1646.6525*1e6
+        deltaFComp = Fup*(((c+vs)/c)-1)
+        return deltaFComp
+    #BFO Analysis
+    deltaFDown = []
+    for i in range(len(data)):
+        v = np.array([data["vx"][i], data["vy"][i], data["vz"][i]], dtype=float)
+        s = np.array([data["x"][i], data["y"][i], data["z"][i]], dtype=float)
+        s = s-posGES
+        vS = np.dot(v, s)/np.linalg.norm(s)
+        FDown = 3615.1525e6
+        deltaFDown.append(FDown*((c/(c+vS))-1))
+    data["deltaFDown"] = pd.Series(deltaFDown)
+    data.deltaFDown = data.deltaFDown.astype(float)
+
+Glide code and saving the kml file
+----------------------------------
+
+    maxAlt = 10668#35kfeet
+    glideDist = maxAlt*16.995
+    drawCircle("Glide", dest.latitude, dest.longitude, glideDist, simplekml.Color.white) 
+    drawPoint("Their location", -35.6, 92.8, 0)
+    print(data)
+    #save to kml file ready for importing to google earth
+
+    ##                      Date                 DateSat             x             y            z        vx        vy        vz       Lat        Lon           Alt        ChType      BTO    BFO      bias          Dist  deltaSatAFC  deltaFBias   deltaFDown
+    ## 0 2014-03-07 18:25:27.421 2014-03-07 18:25:27.400  18136.788690  38071.780267  1149.250781  0.001886 -0.001154  0.026731  1.562623  64.527615  35808.658697  R-Channel RX  12520.0  142.0 -0.495679  36905.345735         10.8       152.5 -1737.185086
+    ## 1 2014-03-07 19:41:02.906 2014-03-07 19:41:02.900  18145.322644  38067.080600  1206.109395  0.001910 -0.000910 -0.001887  1.639914  64.514401  35809.676311  R-Channel RX  11500.0  111.0 -0.495679  36745.423272         -1.2       152.5    -5.711437
+    ## 2 2014-03-07 20:41:04.904 2014-03-07 20:41:04.900  18152.415261  38064.097851  1158.090407  0.002037 -0.000766 -0.024623  1.574644  64.503959  35808.689335  R-Channel RX  11740.0  141.0 -0.495679  36785.744457         -1.3       152.5  1361.827263
+    ## 3 2014-03-07 21:41:26.905 2014-03-07 21:41:26.900  18160.033945  38061.351242  1029.839567  0.002158 -0.000784 -0.045784  1.400310  64.493009  35806.160960  R-Channel RX  12780.0  168.0 -0.495679  36954.463239        -17.9       152.5  2623.988131
+    ## 4 2014-03-07 22:41:21.906 2014-03-07 22:41:21.900  18167.817569  38058.202812   831.983119  0.002137 -0.001000 -0.063659  1.131342  64.481623  35802.301035  R-Channel RX  14540.0  204.0 -0.495679  37238.408842        -28.5       152.5  3680.905844
+    ## 5 2014-03-08 00:10:59.928 2014-03-08 00:10:59.900  18178.157195  38051.354149   435.221535  0.001584 -0.001575 -0.081998  0.591901  64.464937  35794.610366  R-Channel RX  18040.0  252.0 -0.495679  37803.640202        -37.7       152.5  4760.278758
+    ## 6 2014-03-08 00:19:29.416 2014-03-08 00:19:29.400  18178.941079  38050.536935   393.153216  0.001492 -0.001633 -0.083119  0.534696  64.463497  35793.797327  R-Channel RX  18400.0  182.0 -0.495679  37861.914631        -38.0       152.5  4826.809098
+
+    kml.save("Flight.kml")
+    #save data
+    data.to_csv("FinalData.csv")
